@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Censo Escolar 2025 - 2ª Etapa - Situação do Aluno</title>
+
+    <link rel="stylesheet" href="css/bootstrap.css" />
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #333;
+        }
+
+        /* Cabeçalho */
+        .header-bar {
+            text-align: center;
+            background: #0D6E3F;
+            color: white;
+            padding: 25px 0;
+            margin-bottom: 40px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+
+        .header-bar h2 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+        /* Linha superior (Top-Row) */
+        .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 60px;
+            border-bottom: 1px solid #ddd;
+            position: relative;
+            /* AJUSTE: Garante fundo branco para imagens */
+            background-color: #fff; 
+        }
+
+        .top-row img {
+            /* AJUSTE: Altura máxima das imagens reduzida para 70px */
+            max-height: 50px; 
+            width: auto;
+            max-width: 100%;
+            margin-bottom: 0;
+        }
+
+        .titulo-sessao {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            color: #333;
+            max-width: 60%;
+            padding: 0 20px;
+        }
+        
+        /* Barra de Navegação (Menu da Imagem) */
+        .censo-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 10px 60px;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap; 
+        }
+
+        .censo-nav a {
+            color: #0d6e3f;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap; 
+        }
+        
+        .censo-nav a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Barra da Gerência */
+        .gerencia-bar {
+            background-color: #0D6E3F;
+            color: white;
+            padding: 15px 60px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gerencia-bar span {
+            font-size: 1rem; 
+        }
+
+        /* Conteúdo (Caixa Branca Principal) */
+        .conteudo {
+            max-width: 1000px;
+            margin: 40px auto;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            text-align: justify;
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+        }
+        
+        /* Box de Destaque */
+        .descricao {
+            max-width: 1000px;
+            margin: 30px auto 60px auto;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            text-align: justify;
+            background-color: #e9f5ee;
+            padding: 25px 35px;
+            border-radius: 8px;
+            border-left: 5px solid #0D6E3F;
+        }
+        
+        .descricao h2, .conteudo h2, .modal-content h2 {
+             color: #0D6E3F;
+             font-weight: 700;
+             margin-top: 25px;
+             padding-bottom: 5px;
+             border-bottom: 1px dashed #ccc;
+        }
+
+        /* Cards */
+        #cards-documentos {
+            display: flex;
+            justify-content: center;
+            max-width: 1000px;
+            margin: 40px auto 60px auto;
+            gap: 30px;
+            padding: 0 20px;
+            flex-wrap: wrap;
+        }
+
+        .item-censo {
+            flex: 1 1 260px;
+            text-align: center;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            padding: 20px 25px;
+            cursor: pointer; 
+        }
+
+        .item-censo img {
+            height: 90px;
+            margin-bottom: 15px;
+        }
+
+        .info-box h3 {
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: #0D6E3F;
+            text-transform: uppercase;
+        }
+
+        .info-box p {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .info-box h3 a {
+            color: inherit;
+            text-decoration: none;
+            display: block; 
+        }
+
+        .info-box h3 a:hover {
+            text-decoration: underline;
+        }
+
+        /* Diagnóstico */
+        .diagnostico-municipios {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            max-width: 1000px;
+            margin: 60px auto 100px auto;
+        }
+
+        .livro-img {
+            width: 320px;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .diagnostico-texto h3 {
+            color: #0D6E3F;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        /* Movimento e Rendimento */
+        .container-flex {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            max-width: 1000px;
+            margin: 60px auto; 
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+        }
+
+        .rendimento-movimento-box .image-content img {
+            max-width: 500px;
+            height: auto;
+        }
+        
+        .rendimento-movimento-box .text-content h3 {
+            color: #333;
+            font-weight: 600;
+            font-size: 1.4rem;
+            margin-top: 20px;
+            border-bottom: 1px dotted #ccc;
+            padding-bottom: 5px;
+        }
+
+        .text-content {
+            flex: 1;
+        }
+        
+        /* Estilo para a imagem única (situacao1.png) dentro da caixa .conteudo */
+        .conteudo .single-image-wrapper {
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px dashed #ccc;
+            padding-top: 20px;
+        }
+
+        .conteudo .single-image-wrapper img {
+             max-width: 100%;
+             height: auto;
+             border-radius: 4px;
+             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Tabela de contatos SRE (Seção 6) */
+        .table-sre {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            text-align: left;
+        }
+
+        .table-sre th, .table-sre td {
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .table-sre th {
+            background-color: #f1f1f1;
+            color: #333;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .table-sre td {
+            vertical-align: top;
+        }
+        
+        .table-sre tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .table-sre a {
+             color: #0D6E3F;
+             text-decoration: none;
+        }
+        .table-sre a:hover {
+             text-decoration: underline;
+        }
+        
+        /* Estilos para o Conteúdo do Cronograma (usado no Modal) */
+        .schedule-point {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-left: 3px solid #0D6E3F;
+            background-color: #f1f8f3;
+            border-radius: 4px;
+        }
+        .schedule-point h4 {
+            color: #0D6E3F;
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .schedule-point ul {
+            list-style-type: '• ';
+            padding-left: 20px;
+            font-size: 1rem;
+        }
+        .schedule-point li {
+            margin-bottom: 5px;
+        }
+        .responsible {
+            font-style: italic;
+            font-size: 0.95rem;
+            color: #555;
+            margin-top: 10px;
+            border-top: 1px dotted #ccc;
+            padding-top: 5px;
+        }
+
+        /* Estilos para o Modal (Pop-up) */
+        .modal-overlay {
+            position: fixed;
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6); 
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto; 
+            padding: 30px;
+            border: 1px solid #888;
+            width: 90%; 
+            max-width: 700px; 
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 35px;
+            font-weight: bold;
+            position: absolute;
+            top: 5px;
+            right: 20px;
+            cursor: pointer;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #0D6E3F;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+        }
+
+
+        /* MEDIA QUERIES */
+        @media (max-width: 768px) {
+            
+            /* Tabela SRE (Responsividade) */
+            .table-sre, .table-sre thead, .table-sre tbody, .table-sre th, .table-sre td, .table-sre tr { 
+                display: block; 
+            }
+            .table-sre thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            .table-sre td { 
+                border: none;
+                border-bottom: 1px solid #eee; 
+                position: relative;
+                padding-left: 50%; 
+                text-align: right;
+            }
+            .table-sre td:before { 
+                position: absolute;
+                top: 6px;
+                left: 6px;
+                width: 45%; 
+                padding-right: 10px; 
+                white-space: nowrap;
+                text-align: left;
+                font-weight: 600;
+                color: #0D6E3F;
+            }
+            /* Labels para modo responsivo */
+            .table-sre td:nth-of-type(1):before { content: "Regional:"; }
+            .table-sre td:nth-of-type(2):before { content: "Email (Diretoria):"; }
+            .table-sre td:nth-of-type(3):before { content: "Email (Censo):"; }
+            .table-sre td:nth-of-type(4):before { content: "Telefones:"; }
+
+            /* MEDIA QUERIES - Geral */
+            .top-row {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+            
+            .titulo-sessao {
+                position: static;
+                transform: none;
+                font-size: 1.5rem;
+            }
+
+            .censo-nav {
+                padding: 10px 20px;
+                gap: 15px;
+            }
+            
+            .gerencia-bar {
+                 padding: 10px 20px;
+                 font-size: 1rem;
+                 /* Garante que o Menu do lado direito não quebre a linha no mobile */
+                 justify-content: center;
+                 text-align: center;
+            }
+            .gerencia-bar span:last-child {
+                display: none; /* Oculta o ícone de menu no mobile se não for funcional */
+            }
+
+            .conteudo,
+            .descricao,
+            .container-flex {
+                padding: 20px;
+                font-size: 1rem;
+            }
+            
+            #cards-documentos {
+                flex-direction: column;
+                gap: 25px;
+            }
+
+            .diagnostico-municipios,
+            .container-flex {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .livro-img,
+            .rendimento-movimento-box .image-content img {
+                width: 100%;
+                max-width: 320px;
+                margin: 0 auto;
+            }
+            
+            .modal-content {
+                margin-top: 50px; 
+            }
+        }
+    </style>
+
+</head>
+<body>
+
+    <div id="scheduleModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('scheduleModal')">&times;</span>
+            
+            <h2>📅 Cronograma – Segunda Etapa do Censo Escolar 2025</h2>
+            <p style="margin-bottom: 25px;">Datas importantes para a declaração da Situação do Aluno:</p>
+
+            <div class="schedule-point">
+                <h4>📌 02/02/2026 a 13/03/2026 (Período de Coleta)</h4>
+                <ul>
+                    <li>Disponibilização da funcionalidade Situação do Aluno no Sistema Educacenso.</li>
+                    <li>Digitação e exportação dos dados de rendimento e movimento escolar.</li>
+                </ul>
+                <p class="responsible">Responsáveis: Diretores escolares e gestores municipais e estadual.</p>
+            </div>
+
+            <div class="schedule-point">
+                <h4>📌 01/04/2026 a 15/04/2026 (Período de Retificação)</h4>
+                <ul>
+                    <li>Conferência, ratificação e correção de eventuais inconsistências nos dados.</li>
+                </ul>
+                <p class="responsible">Responsáveis: Diretor escolar e gestores municipais e estadual.</p>
+            </div>
+
+            <p style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px; text-align: center;">
+                Para ver o <strong>cronograma completo</strong> (incluindo todas as fases e etapas), acesse a <a href="https://www.in.gov.br/en/web/dou/-/portaria-n-239-de-5-de-maio-de-2025-627643964" target="_blank">PORTARIA Nº 239, DE 5 DE MAIO DE 2025</a>.
+            </p>
+        </div>
+    </div>
+
+
+    <div class="container-fluid">
+        <div class="top-row">
+            <img src="imagens/Censo EScolar Atual.png" alt="Logotipo do Censo Escolar" />
+            
+            <div class="titulo-sessao">2ª ETAPA DO CENSO ESCOLAR 2025</div>
+            
+            <img src="imagens/Secretaria da Educação1- Atual.png" alt="Logotipo da Secretaria de Educação e Governo do Tocantins" />
+        </div>
+        
+        <nav class="censo-nav">
+            <a href="https://www.to.gov.br/seduc/" target="_blank" title="Secretaria da Educação"> Secretaria da Educação</a>
+            <a href="https://www.to.gov.br/" target="_blank" title="Secretaria de Governo"> Governo do Tocantins</a>
+            <a href="https://www.gov.br/inep/pt-br" target="_blank" title="Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira"> INEP</a>
+            <a href="https://educacenso.inep.gov.br/educacenso/" target="_blank" title="Educacenso"> Educacenso</a>
+            <a href="https://www.gov.br/inep/pt-br/centrais-de-conteudo/legislacao/censo-escolar" target="_blank" title="Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira">Legislação</a>
+            <a href="Censo_Escolar.html" target="_blank" title="Censo Escolar"> Censo Escolar</a>
+            <a href="censo_escolar_1ª_etapa.html" target="_blank">1ª Etapa (Matrícula Inicial) - 2026</a>
+            <a href="https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/indicadores-educacionais" target="_blank" title="Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira">Indicadores Educacionais</a>
+
+        </nav>
+
+        <div class="gerencia-bar">
+            <span>Gerência de Estatística e Censo Escolar</span>
+            <span>&#9776; Menu</span> 
+        </div>
+    </div>
+    
+    <div class="header-bar">
+        <h2>SITUAÇÃO DO ALUNO (MOVIMENTO E RENDIMENTO)</h2>
+    </div>
+
+    <div class="container">
+        <div class="conteudo">
+            <h2>1. Informações Gerais</h2>
+            <p>O Censo Escolar é o levantamento estatístico mais importante da educação básica no Brasil, coordenado pelo <strong>Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira (INEP)</strong>.</p>
+            
+            <h3>Módulo Situação do Aluno (2ª Etapa)</h3>
+            <p>Este módulo é a segunda etapa da coleta do Censo Escolar, na qual devem ser informados os dados de rendimento e movimento escolar alcançados pelos alunos declarados no Sistema Educacenso durante a 1ª etapa da coleta (Matrícula Inicial).</p>
+            <p>Os dados são cruciais, pois são utilizados para o cálculo da taxa de rendimento (aprovação, reprovação e abandono) e da taxa de não resposta. As taxas de rendimento escolar compõem o cálculo do <strong>Índice de Desenvolvimento da Educação Básica (Ideb)</strong>, que é um indicador de qualidade educacional divulgado a cada dois anos.</p>
+            <p class="small text-muted">A <STRONG>Taxa de Não Resposta (TNR)</STRONG> indica a porcentagem de alunos que não tiveram as informações de rendimento/movimento computadas por falta de informação ou por inconsistências.</p>
+        </div>
+
+        <div class="conteudo">
+            <h2>2. Cenários de Participação</h2>
+            
+            <h3>✅ Respondem à Situação do Aluno</h3>
+            <ul>
+                <li><strong>Escolas com Matrículas de Escolarização:</strong> Devem informar o rendimento ou movimento escolar para cada matrícula de escolarização declarada na 1ª etapa de coleta do Censo Escolar 2025.</li>
+                <li><strong>Escolas Novas e Paralisadas:</strong> Escolas que iniciaram as atividades após a data de referência do Censo Escolar 2025 (28/05) e que puderam admitir alunos transferidos de outras instituições. Após a admissão, a escola deverá informar a situação de rendimento ou movimento escolar desses alunos ao final do ano letivo.</li>
+            </ul>
+
+            <h3>❌ Não Respondem à Situação do Aluno</h3>
+            <ul>
+                <li>Escolas que <Strong>não informaram matrículas de escolarização</Strong> na 1ª etapa de coleta 2025 não preenchem o módulo Situação do Aluno.</li>
+                <li>Escolas <Strong>exclusivas de atividade complementar</Strong> e/ou Atendimento Educacional Especializado (AEE).</li>
+                <li>Escolas que informaram apenas matrículas de <strong>Itinerário Formativo</strong>.</li>
+                <li>Escolas que <strong>não realizaram o fechamento</strong> na 1ª etapa da coleta 2025 tiveram suas matrículas desconsideradas e, dessa forma, não preenchem o módulo Situação do Aluno.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container-flex rendimento-movimento-box">
+        <div class="text-content">
+            <h2>3. Conceitos de Movimento e Rendimento Escolar</h2>
+            
+            <h3>Movimento Escolar</h3>
+            <p>Compreende a mudança do vínculo escolar do aluno depois da data de referência do Censo Escolar 2025 (28/05) e antes do término do ano letivo.</p>
+            <ul>
+                <li><strong>Transferido:</strong> O aluno mudou de uma escola para outra mediante um requerimento formal, ou mudou de modalidade de ensino na mesma escola (ex: regular para EJA).</li>
+                <li><strong>Deixou de Frequentar:</strong> O aluno abandonou a escola antes do término do ano letivo, sem requerer formalmente a transferência para outra instituição de ensino.</li>
+                <li><strong>Falecido:</strong> O aluno faleceu antes do término do ano letivo.</li>
+            </ul>
+            
+            <h3>Rendimento Escolar</h3>
+            <p>Compreende os resultados obtidos pelos alunos que estavam matriculados e frequentes na escola no término do ano letivo.</p>
+            <ul>
+                <li><strong>Aprovado:</strong> Alcançou os critérios mínimos para a conclusão satisfatória da etapa de ensino e está apto a ser matriculado na etapa seguinte no próximo ano letivo.</li>
+                <li><strong>Reprovado:</strong> Não alcançou os critérios mínimos para a conclusão da etapa de ensino e, portanto, não está apto a ser matriculado na etapa seguinte no próximo ano letivo.</li>
+                <li><strong>Concluinte:</strong> Aluno que foi aprovado e concluiu, com emissão de certificado, a etapa que estava cursando (ensino fundamental, ensino médio ou educação profissional).</li>
+            </ul>
+        </div>
+        
+        <div class="image-content">
+              
+            <img src="Imagens/Rendimento.png" alt="Fluxograma de Rendimento e Movimento Escolar do Censo Escolar" title="Fluxograma de Situação do Aluno">
+            <p style="text-align: center; font-size: 0.9em; margin-top: 10px;">Opções de Rendimento e Movimento Escolar.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="descricao">
+            <h2>4. Alunos Admitidos Após o Censo</h2>
+            <p>São os alunos que ingressaram na escola após a data de referência do Censo Escolar 2025 (28/05). É fundamental a admissão desses alunos, pois a situação final da matrícula será declarada na escola que o admitiu, sendo essa informação utilizada no cálculo das taxas de rendimento escolar.</p>
+            
+            <h4>Regras de Admissão</h4>
+            <ul style="list-style-type: disc;">
+                <li>Apenas alunos com matrícula de <strong>escolarização</strong> na 1ª etapa de coleta poderão ser admitidos após o Censo.</li>
+                <li>Para "admitir após" um aluno na <strong>mesma escola</strong>, só será possível se for em uma modalidade diferente. Para isso, o aluno deve ter sido previamente marcado como “transferido” ou “deixou de frequentar” na modalidade anterior.</li>
+                <li>As informações de modalidade e etapa de ensino da admissão após devem ser <strong>compatíveis</strong> com a 1ª etapa. Exemplo: um aluno de creche não poderá ser admitido após no ensino médio.</li>
+                <li>Na Admissão após <strong>não é possível realizar a edição do vínculo</strong> do aluno admitido.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="conteudo">
+            <h2>5. Orientações por Etapa/Modalidade de Ensino</h2>
+
+            <h3>Educação Infantil (Creche e Pré-escola)</h3>
+            <p>A informação de rendimento (<strong>Aprovado</strong> ou <strong>Reprovado</strong>) <strong>não se aplica</strong> a alunos da Educação Infantil.</p>
+            <ul>
+                <li>Deve-se informar apenas o <strong>movimento</strong> do aluno (Transferido, Deixou de Frequentar ou Falecido).</li>
+                <li>Se o aluno permaneceu na escola, informe a opção <strong>“Sem Movimentação (SM)”</strong>.</li>
+            </ul>
+
+            <hr>
+            <h3>Ensino Fundamental e Médio (Ensino Regular e Educação Especial)</h3>
+            <p>O preenchimento da informação de rendimento ou movimento escolar é <strong>obrigatório</strong>.</p>
+            <ul>
+                <li><strong>Dependência Escolar:</strong> Para alunos em regime de Progressão Parcial/Dependência, a opção a ser informada é <strong>“Aprovado”</strong>. No caso de séries/anos finais, marque também a opção <strong>“Não concluinte”</strong>.</li>
+                <li>Matrículas exclusivas de <strong>Itinerário Formativo</strong> não estarão disponíveis para a declaração da Situação do Aluno.</li>
+            </ul>
+
+            <hr>
+            <h3>Educação de Jovens e Adultos (EJA) e Educação Profissional</h3>
+            <p>A informação de rendimento escolar (<strong>Aprovado</strong> ou <strong>Reprovado</strong>) deverá ser declarada <strong>apenas ao final da etapa de ensino</strong>, devido à organização diferenciada (modular, seriada, cíclica).</p>
+            <ul>
+                <li>Se a etapa ainda não terminou e a informação de rendimento não existe, a opção a ser declarada é <strong>“Curso em Andamento (CA)”</strong>.</li>
+                <li>Para alunos aprovados nas <strong>etapas finais</strong> da EJA e da Educação Profissional, é obrigatória a informação de <strong>Concluinte</strong> (ou Não Concluinte) da etapa de ensino.</li>
+            </ul>
+            
+            <div class="single-image-wrapper">
+                 <img src="imagens/situacao1.png" alt="Tabela de Conceitos" title="Tabela de Conceitos da Situação do Aluno" />
+                 <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Exemplo de preenchimento da Situação do Aluno.</p>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <div id="cards-documentos"> 
+        <div class="item-censo" >
+            <img src="imagens/Cronograma.png" alt="Ícone de Cronograma" />
+            <div class="info-box">
+                <h3>
+                    <a href="javascript:void(0)" onclick="openModal('scheduleModal')"> 
+                        CRONOGRAMA<br>CENSO 2025
+                    </a>
+                </h3>
+                <p>Acompanhe as datas oficiais do Censo Escolar 2025.</p>
+            </div>
+        </div>
+
+        <div class="item-censo">
+            <img src="imagens/PDF.png" alt="Ícone de PDF" />
+            <div class="info-box">
+                <h3>
+                    <a href="Legislação/caderno_de_conceitos_e_orientacoes_situacao_do_aluno_2024.pdf" target="_blank">
+                        ORIENTAÇÕES - INEP
+                    </a>
+                </h3>
+                <p>Manual de Instruções da 2ª Etapa do Censo Escolar.</p>
+            </div>
+        </div>
+
+        <div class="item-censo">
+            <img src="imagens/Portaria.png" alt="Ícone de Portaria" />
+            <div class="info-box">
+                <h3>
+                    <a href="https://www.in.gov.br/en/web/dou/-/portaria-n-239-de-5-de-maio-de-2025-627643964" target="_blank">
+                        PORTARIA Nº 239/2025
+                    </a>
+                </h3>
+                <p>Normas e diretrizes oficiais do Censo 2025.</p>
+            </div>
+        </div>
+
+        <div class="item-censo">
+            <img src="imagens/Nota técnica.png" alt="Ícone Nota Técnica" />
+            <div class="info-box">
+                <h3><a href="#">NOTAS TÉCNICAS</a></h3>
+                <p>Insira aqui o texto referente às Notas Técnicas.</p>
+            </div>
+        </div>
+
+        <div class="item-censo">
+            <img src="imagens/Vídeo Tutorial.png" alt="Ícone Vídeo Tutorial" />
+            <div class="info-box">
+                <h3><a href="https://www.youtube.com/playlist?list=PLjz5Kd6rxbE7kt_Ho7OEszPMpeazINtg-" target="_blank">VÍDEOS TUTORIAIS</a></h3>
+                <p>Série de vídeos com passo a passo para preenchimento correto.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="diagnostico-municipios">
+        <img src="imagens/Livros.JPEG" alt="Ícone de livros" class="livro-img" />
+
+        <div class="diagnostico-texto">
+            <h3>Diagnóstico dos Municípios</h3>
+            <p>
+                Com base nos dados do Censo Escolar, o <strong>MEC</strong> produz relatórios oficiais que permitem analisar a educação pública em todo o país.
+            </p>
+            <p>
+                No portal <strong><a href="https://www.gov.br/mec/pt-br/aqui-tem-mec" target="_blank">"Aqui tem MEC"</a></strong>, estão disponíveis <strong>painéis interativos, mapas e gráficos</strong> com informações detalhadas.
+            </p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="conteudo">
+            <h2>6. Dúvidas e Contatos</h2>
+            <p>Em caso de dúvidas sobre o preenchimento, entre em contato com o(a) técnico censitário da sua Superintendência Regional de Educação:</p>
+            
+            <h3>Contatos da SRE's (Tocantins)</h3>
+
+            <table class="table-sre">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Regional</th>
+                        <th style="width: 30%;">E-mail (Diretoria)</th>
+                        <th style="width: 30%;">E-mail (Censo Escolar)</th>
+                        <th style="width: 25%;">Telefone SRE's</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>000 - Palmas</td>
+                        <td><a href="mailto:diretoria-palmas@seduc.to.gov.br">diretoria-palmas@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censo-palmas@seduc.to.gov.br">censo-palmas@seduc.to.gov.br</a></td>
+                        <td>(63) 3218-6164</td>
+                    </tr>
+                    <tr>
+                        <td>001 - Araguaína</td>
+                        <td><a href="mailto:diretoria-araguaina@seduc.to.gov.br">diretoria-araguaina@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censo-araguaina@seduc.to.gov.br">censo-araguaina@seduc.to.gov.br</a></td>
+                        <td>(63) 3411-5007<br>(63) 3411-5016</td>
+                    </tr>
+                    <tr>
+                        <td>002 - Araguatins</td>
+                        <td><a href="mailto:diretoria-araguatins@seduc.to.gov.br">diretoria-araguatins@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censo-araguatins@seduc.to.gov.br">censo-araguatins@seduc.to.gov.br</a></td>
+                        <td>(63) 3474-4014</td>
+                    </tr>
+                    <tr>
+                        <td>003 - Arraias</td>
+                        <td><a href="mailto:dre.arraias.seduc.to@gmail.com">dre.arraias.seduc.to@gmail.com</a></td>
+                        <td><a href="mailto:apa.arraias@gmail.com">apa.arraias@gmail.com</a></td>
+                        <td>(63) 3951-1009</td>
+                    </tr>
+                    <tr>
+                        <td>004 - Dianópolis</td>
+                        <td><a href="mailto:diretoria-dianopolis@seduc.to.gov.br">diretoria-dianopolis@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censo-dianopolis@seduc.to.gov.br">censo-dianopolis@seduc.to.gov.br</a></td>
+                        <td>(63) 9251-7177</td>
+                    </tr>
+                    <tr>
+                        <td>005 - Guaraí</td>
+                        <td><a href="mailto:diretoria-guarai@seduc.to.gov.br">diretoria-guarai@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censo-guarai@seduc.to.gov.br">censo-guarai@seduc.to.gov.br</a></td>
+                        <td>(63) 3464-8002</td>
+                    </tr>
+                    <tr>
+                        <td>006 - Gurupi</td>
+                        <td><a href="mailto:diretoria-gurupi@gmail.com">diretoria-gurupi@gmail.com</a></td>
+                        <td><a href="mailto:censo-gurupi@seduc.to.gov.br">censo-gurupi@seduc.to.gov.br</a></td>
+                        <td>(63) 3612-7207</td>
+                    </tr>
+                    <tr>
+                        <td>007 - Miracema</td>
+                        <td><a href="mailto:diretoria-miracema@seduc.to.gov.br">diretoria-miracema@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censoescolarmiracema@seduc.to.gov.br">censoescolarmiracema@seduc.to.gov.br</a></td>
+                        <td>(63) 3929-3010</td>
+                    </tr>
+                    <tr>
+                        <td>008 - Paraíso do Tocantins</td>
+                        <td><a href="mailto:diretoria-paraiso@seduc.to.gov.br">diretoria-paraiso@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:asplan-paraiso@seduc.to.gov.br">asplan-paraiso@seduc.to.gov.br</a></td>
+                        <td>(63) 3404-1016<br>(63) 3409-1012<br>(63) 3409-1001</td>
+                    </tr>
+                    <tr>
+                        <td>009 - Porto Nacional</td>
+                        <td><a href="mailto:diretoria-porto@seduc.to.gov.br">diretoria-porto@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censoescolardreporto@gmail.com">censoescolardreporto@gmail.com</a></td>
+                        <td>(63) 3663-8102<br>(63) 3663-8120</td>
+                    </tr>
+                    <tr>
+                        <td>010 - Tocantinópolis</td>
+                        <td><a href="mailto:diretoria-tocantinopolis@seduc.to.gov.br">diretoria-tocantinopolis@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:asplan-tocantinopolis@seduc.to.gov.br">asplan-tocantinopolis@seduc.to.gov.br</a></td>
+                        <td>(63) 3471-7023</td>
+                    </tr>
+                    <tr>
+                        <td>011 - Colinas</td>
+                        <td><a href="mailto:diretoria-colinas@seduc.to.gov.br">diretoria-colinas@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censoescolarcolinas@seduc.to.gov.br">censoescolarcolinas@seduc.to.gov.br</a></td>
+                        <td>(63) 3476-7416</td>
+                    </tr>
+                    <tr>
+                        <td>012 - Pedro Afonso</td>
+                        <td><a href="mailto:diretoria-pedroafonso@seduc.to.gov.br">diretoria-pedroafonso@seduc.to.gov.br</a></td>
+                        <td><a href="mailto:censo-pedroafonso@seduc.to.gov.br">censo-pedroafonso@seduc.to.gov.br</a></td>
+                        <td>(63) 3466-1314<br>(63) 3466-2413</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('scheduleModal');
+            
+            // Fecha o modal ao clicar no 'x'
+            const closeBtn = modal.querySelector('.close-button');
+            if (closeBtn) {
+                closeBtn.onclick = () => closeModal('scheduleModal');
+            }
+
+            // Fecha o modal ao clicar fora da caixa (no overlay)
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    closeModal('scheduleModal');
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

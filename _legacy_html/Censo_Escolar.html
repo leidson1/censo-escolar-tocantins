@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerência de Estatística e Censo Escolar</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        /* Topo */
+        .topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: green;
+            color: beige;
+            padding: 10px 40px;
+        }
+
+        .gece {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .apresentacao {
+            text-align: center;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 30px;
+            color: green;
+        }
+
+
+        /* Imagens e links superiores */
+        .imagens-lado-a-lado {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 20px;
+            
+        }
+
+        .imagens-lado-a-lado img {
+            max-width: 300px;
+            height: auto;
+        }
+
+        .imagens-lado-a-lado a {
+            color: blue;
+            text-align: center;
+            display: inline-block;
+        }
+
+        /* Menu hamburguer */
+        .menu-hamburger {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            gap: 8px;
+        }
+
+        .menu-icone {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 25px;
+            height: 18px;
+        }
+
+        .menu-icone div {
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        /* Menu principal */
+        .menu-itens {
+            display: none; /* escondido por padrão */
+            background: #f0f0f0;
+            padding: 10px 20px;
+            text-align: right;
+        }
+
+        .menu-itens div.menu-item {
+            position: relative;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+
+        /* Submenu */
+        .submenu {
+            display: none;
+            flex-direction: column;
+            margin-left: 15px;
+            gap: 5px;
+        }
+
+        .submenu a {
+            text-decoration: none;
+            color: blue;
+            padding: 3px 0;
+        }
+
+        .submenu a:hover {
+            text-decoration: underline;
+        }
+
+        /* Conteúdo */
+        .conteudo {
+            max-width: 1400px;
+            margin: auto;
+            text-align: justify;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        footer {
+            background: #739ce3;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            color: black;
+        }
+    </style>
+
+    <script>
+        // Abre/fecha menu principal
+        function toggleMenu() {
+            const menu = document.getElementById("menuItens");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+
+        // Abre/fecha submenu
+        function toggleSubmenu(id) {
+            const submenu = document.getElementById(id);
+            submenu.style.display = (submenu.style.display === "block") ? "none" : "block";
+        }
+    </script>
+</head>
+<body>
+
+    <!-- Imagens e links superiores -->
+    <div class="imagens-lado-a-lado">
+        <img src="Imagens/Censo Escolar.jpg" alt="Logotipo do Censo Escolar" style="width: 170px;">  
+        <a href="https://www.to.gov.br/seduc/" target="_blank" title="Secretaria da Educação" a href="https://www.to.gov.br/seduc" target="_blank" title="Governo do Tocantins">
+            Secretaria da Educação<br>Governo do Tocantins </a>
+        
+        <a href="https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/censo-escolar" 
+            target="_blank" title="Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira "
+        a href= "https://www.gov.br/inep/pt-br/centrais-de-conteudo/legislacao" target="_blank">INEP<br> Legislação</a>
+
+        <a href= "#">Manuais</a>
+        <a href= "https://www.to.gov.br/seduc/" target="_blank" a href= "https://www.to.gov.br/seduc/" target="_blank">
+            2ª Etapa (Situação do Aluno - 2025<br>1ª Etapa (Matrícula Inicial> 2026</a>
+        <img src="Imagens/Secretaria_da_Educação.png" alt="Logotipo da SEDUC">
+    </div>
+
+    <!-- Topo com título e hambúrguer -->
+    <div class="topo">
+        <h1 class="gece">Gerência de Estatística e Censo Escolar</h1>
+        <div class="menu-hamburger" onclick="toggleMenu()">
+            <div class="menu-icone">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <span>Menu</span>
+        </div>
+    </div>
+
+    <!-- Menu principal -->
+    <div class="menu-itens" id="menuItens">
+        <div>Acesso à informação</div>
+        <div>Dados Estatísticos</div>
+
+        <!-- Central de conteúdos -->
+        <div class="menu-item" onclick="toggleSubmenu('submenuConteudos')">
+            Central de conteúdos
+            <div class="submenu" id="submenuConteudos">
+                <a href="link_caderno_conceito.pdf" target="_blank">Caderno de Conceito - Censo Escolar 2025</a><br>
+                <a href="link_item2.pdf" target="_blank">Glossario da educacao especial censo escolar 2015</a><br>
+                <a href="link_item3.pdf" target="_blank">Item 3</a><br>
+                <a href="link_item4.pdf" target="_blank">Item 4</a><br>
+                <a href="link_item5.pdf" target="_blank">Item 5</a><br>
+                <a href="link_item6.pdf" target="_blank">Item 6</a><br>
+            </div>
+        </div>
+
+        <!-- Servidores -->
+        <div class="menu-item" onclick="toggleSubmenu('submenuServidores')">
+            Servidores
+            <div class="submenu" id="submenuServidores">
+                <a href="link_modulacao.pdf" target="_blank">Modulação</a>
+                <a href="link_rh.pdf" target="_blank">RH</a>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="apresentacao">
+        <p>Apresentação</p>
+    </div>
+
+    <!-- Conteúdo completo -->
+    <div class="conteudo">
+        <p>
+            O Censo Escolar é o principal instrumento de coleta de informações da educação básica e a mais importante pesquisa estatística educacional brasileira. É coordenado pelo Inep e realizado em regime de colaboração entre as secretarias estaduais e municipais de educação e com a participação de todas as escolas públicas e privadas do país. A pesquisa estatística abrange as diferentes etapas e modalidades da educação básica e profissional:
+        </p>
+        <ul>
+            <li>Ensino regular (educação infantil, ensino fundamental e médio);</li>
+            <li>Educação especial – escolas e classes especiais;</li>
+            <li>Educação de Jovens e Adultos (EJA);</li>
+            <li>Educação profissional e tecnológica (cursos técnicos e cursos de formação inicial continuada ou qualificação profissional).</li>
+        </ul>
+
+        <p>
+            A pesquisa estatística tem caráter declaratório e é dividida em duas etapas.  <a href="censo_escolar_1ª_etapa.html" target=" 1ª Etapa">A primeira etapa</a> do Censo Escolar coleta informações sobre os estabelecimentos de ensino, gestores, turmas, alunos e profissionais escolares em sala de aula. <a href="censo_escolar_2ª_etapa.html" target=" 2ª Etapa">A segunda etapa</a> coleta informações sobre o movimento e o rendimento escolar dos alunos, ao final do ano letivo.
+        </p>
+
+        <p>
+            O Censo Escolar é realizado anualmente e a declaração é obrigatória para todas as escolas públicas e privadas do país. Além disso, é regulamentado por instrumentos normativos que instituem a obrigatoriedade, os prazos, os responsáveis e suas responsabilidades, bem como os procedimentos para realização de todo o processo de coleta de dados.
+        </p>
+
+        <p>
+            <strong>Finalidade –</strong> O Censo Escolar é uma ferramenta fundamental para que os atores educacionais possam compreender a situação educacional do país, das unidades federativas, dos municípios e do Distrito Federal, bem como das escolas e, com isso, acompanhar a efetividade das políticas públicas.
+        </p>
+
+        <p>
+            A compreensão da situação educacional ocorre por intermédio de um conjunto amplo de indicadores que possibilitam monitorar o desenvolvimento da educação brasileira, como o Índice de Desenvolvimento da Educação Básica (Ideb), as taxas de rendimento e de fluxo escolar, a distorção idade-série, entre outros, que servem de referência para as metas do Plano Nacional da Educação (PNE), que podem ser acompanhadas no Observatório do PNE. Todos esses indicadores são calculados com base nos dados do Censo Escolar.
+        </p>
+
+        <p>
+            Além disso, as matrículas e os dados escolares coletados servem de base para o repasse de recursos do governo federal e para o planejamento e divulgação de dados das avaliações realizadas pelo Inep. Todos esses Indicadores Educacionais são calculados com base nos dados do Censo Escolar.
+        </p>
+
+        <p>
+            <strong>Responsabilidades e deveres –</strong> O Censo Escolar é realizado de forma descentralizada, por meio de uma colaboração entre a União, os estados e os municípios. De acordo com a Portaria MEC nº 316, de 4 de abril de 2007, as atribuições dos diferentes atores no processo são:
+        </p>
+
+        <ul>
+            <li><strong>a)</strong> Ao Inep cabe definir e disponibilizar para os demais atores o cronograma anual de atividades, os instrumentos e os meios necessários à execução do Censo; estabelecer mecanismos de controle de qualidade da informação; organizar e enviar para publicação os resultados; além de avaliar e acompanhar todas as etapas do processo censitário, a fim de garantir o alcance de seus objetivos e o aperfeiçoamento constante;</li>
+            <li><strong>b)</strong> Aos gestores dos sistemas estaduais e municipais de educação cabe treinar os agentes que coordenarão o processo censitário nas respectivas escolas vinculadas; acompanhar e controlar toda a execução do processo censitário no seu território; zelar pelo cumprimento dos prazos e normas estabelecidas, bem como responsabilizar-se solidariamente pela veracidade dos dados declarados nos seus respectivos sistemas de ensino;</li>
+            <li><strong>c)</strong> Aos diretores e dirigentes dos estabelecimentos de ensino público e privado cabe responder ao Censo Escolar da Educação Básica, no Sistema Educacenso, responsabilizando-se pela veracidade das informações declaradas.</li>
+        </ul>
+    </div>
+
+    <footer>Todos os direitos reservados - Josenilson dos Anjos</footer>
+</body>
+</html>
