@@ -28,9 +28,9 @@ export default function Home() {
         transition={{ duration: 0.5 }}
         className="bg-gradient-to-r from-white to-green-50 rounded-xl shadow-sm p-8 mb-8 border border-green-100 relative overflow-hidden"
       >
-        <div className="relative z-10">
+        <div className="relative z-10 text-center mx-auto max-w-2xl">
           <h2 className="text-3xl font-bold text-[#0D6E3F] mb-4">Bem-vindo ao Censo Escolar</h2>
-          <p className="text-lg text-gray-700 leading-relaxed max-w-3xl">
+          <p className="text-lg text-gray-700 leading-relaxed text-balance">
             O principal instrumento de coleta de informações da educação básica e a mais importante pesquisa estatística educacional brasileira. Coordenado pelo Inep, é fundamental para compreender a situação educacional do país e acompanhar a efetividade das políticas públicas.
           </p>
         </div>

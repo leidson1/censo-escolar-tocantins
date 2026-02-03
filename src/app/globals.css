@@ -12,7 +12,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #ffffff; /* Enforcing light mode for now as per original design */
+    --background: #ffffff;
+    /* Enforcing light mode for now as per original design */
     --foreground: #171717;
   }
 }
@@ -20,5 +21,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, sans-serif; /* Matching legacy font */
+  font-family: Arial, sans-serif;
+  /* Matching legacy font */
+  text-align: center;
 }
