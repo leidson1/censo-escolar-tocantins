@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 
 export default function Footer() {
     return (
-        <footer className="bg-[#1a4a36] text-white pt-16 pb-8 border-t-4 border-[#0D6E3F]">
+        <footer className="bg-[#1a4a36] text-white pt-16 pb-8 border-t-4 border-[#0D6E3F] text-left">
             <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
 
                 {/* Column 1: Institucional */}
@@ -14,7 +14,6 @@ export default function Footer() {
                     </p>
                     <div className="pt-4">
                         <img src="/imagens/Secretaria da Educação1- Branco.png" alt="Seduc TO" className="h-12 opacity-80" />
-                        {/* Fallback text if image not exists or just keep consistent styling */}
                         <div className="font-bold text-lg mt-2">SEDUC/TO</div>
                     </div>
                 </div>
@@ -58,13 +57,18 @@ export default function Footer() {
                         <li className="flex items-start gap-3">
                             <MapPin className="text-green-400 shrink-0 mt-0.5" size={18} />
                             <span>
-                                Praça dos Girassóis, Esplanada das Secretarias<br />
-                                Palmas - TO, 77001-900
+                                Quadra 604 Sul, Alameda 6, Al 13<br />
+                                Plano Diretor Sul - Palmas - TO<br />
+                                CEP: 77022-038
                             </span>
                         </li>
-                        <li className="flex items-center gap-3">
-                            <Phone className="text-green-400 shrink-0" size={18} />
-                            <span>(63) 3218-1400</span>
+                        <li className="flex items-start gap-3">
+                            <Phone className="text-green-400 shrink-0 mt-0.5" size={18} />
+                            <span>
+                                (63) 3027-3679<br />
+                                (63) 3027-3680<br />
+                                (63) 3027-3681
+                            </span>
                         </li>
                         <li className="flex items-center gap-3">
                             <Mail className="text-green-400 shrink-0" size={18} />

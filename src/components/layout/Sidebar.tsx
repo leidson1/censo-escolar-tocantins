@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { X, ChevronDown, FileText, Users, ExternalLink, Home, BookOpen } from "lucide-react";
+import { X, ChevronDown, FileText, ExternalLink, Home, BookOpen, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -72,6 +72,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 <span className="font-medium">2ª Etapa: Situação do Aluno</span>
                             </Link>
 
+                            <Link href="/paineis" onClick={onClose} className="flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors">
+                                <BarChart3 size={20} />
+                                <span className="font-medium">Painéis de Resultados</span>
+                            </Link>
+
                             <div className="h-px bg-gray-100 my-2"></div>
 
                             {/* Submenu: Conteúdos */}
@@ -95,41 +100,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden pl-11 pr-2 space-y-1"
                                         >
-                                            <a href="#" className="block py-2 text-sm text-gray-600 hover:text-[#0D6E3F] hover:underline">Cadernos de Conceitos</a>
-                                            <a href="#" className="block py-2 text-sm text-gray-600 hover:text-[#0D6E3F] hover:underline">Legislação e Portarias</a>
+                                            <a href="#" className="block py-2 text-sm text-gray-600 hover:text-[#0D6E3F] hover:underline">Caderno de Conceitos</a>
+                                            <a href="#" className="block py-2 text-sm text-gray-600 hover:text-[#0D6E3F] hover:underline">Legislação</a>
                                             <a href="#" className="block py-2 text-sm text-gray-600 hover:text-[#0D6E3F] hover:underline">Tutoriais e Manuais</a>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
                             </div>
 
-                            {/* Submenu: Servidores */}
-                            <div>
-                                <button
-                                    onClick={() => toggleSubmenu("servidores")}
-                                    className="w-full flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-colors"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Users size={20} className="text-gray-500" />
-                                        <span>Servidores</span>
-                                    </div>
-                                    <ChevronDown size={16} className={`transform transition-transform ${openSubmenu === 'servidores' ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                <AnimatePresence>
-                                    {openSubmenu === "servidores" && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-hidden pl-11 pr-2 space-y-1"
-                                        >
-                                            <a href="#" className="block py-2 text-sm text-gray-600 hover:text-[#0D6E3F] hover:underline">Modulação</a>
-                                            <a href="#" className="block py-2 text-sm text-gray-600 hover:text-[#0D6E3F] hover:underline">Recursos Humanos</a>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
 
                             <div className="h-px bg-gray-100 my-2"></div>
 

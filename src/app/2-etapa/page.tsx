@@ -145,9 +145,9 @@ export default function SegundaEtapa() {
                 <div className="flex-1 min-w-[260px] bg-white rounded-lg shadow-sm p-6 text-center cursor-pointer hover:-translate-y-1 transition-transform border border-gray-100">
                     <Image src="/imagens/PDF.png" alt="PDF" width={80} height={80} className="mx-auto h-[90px] w-auto mb-4" />
                     <h3 className="text-[#0D6E3F] font-bold text-lg uppercase mb-3">
-                        <a href="/Legislação/caderno_de_conceitos_e_orientacoes_situacao_do_aluno_2024.pdf" target="_blank" className="hover:underline">ORIENTAÇÕES - INEP</a>
+                        <a href="/Legislação/caderno_de_conceitos_e_orientacoes_situacao_do_aluno_2024.pdf" target="_blank" className="hover:underline">CADERNO DE CONCEITOS</a>
                     </h3>
-                    <p className="text-gray-600">Manual de Instruções da 2ª Etapa do Censo Escolar.</p>
+                    <p className="text-gray-600">Orientações da 2ª Etapa do Censo Escolar.</p>
                 </div>
 
                 {/* ... Other cards can be added similarly ... */}

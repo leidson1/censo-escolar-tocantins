@@ -28,9 +28,9 @@ export default function Home() {
         transition={{ duration: 0.5 }}
         className="bg-gradient-to-r from-white to-green-50 rounded-xl shadow-sm p-8 mb-8 border border-green-100 relative overflow-hidden"
       >
-        <div className="relative z-10 text-center mx-auto max-w-2xl">
-          <h2 className="text-3xl font-bold text-[#0D6E3F] mb-4">Bem-vindo ao Censo Escolar</h2>
-          <p className="text-lg text-gray-700 leading-relaxed text-balance">
+        <div className="relative z-10 mx-auto max-w-5xl">
+          <h2 className="text-3xl font-bold text-[#0D6E3F] mb-4 text-center">Bem-vindo ao Censo Escolar</h2>
+          <p className="text-lg text-gray-700 leading-relaxed text-justify">
             O principal instrumento de coleta de informações da educação básica e a mais importante pesquisa estatística educacional brasileira. Coordenado pelo Inep, é fundamental para compreender a situação educacional do país e acompanhar a efetividade das políticas públicas.
           </p>
         </div>
@@ -73,7 +73,7 @@ export default function Home() {
                 <span className="font-semibold text-gray-700 group-hover:text-blue-700">1ª Etapa: Matrícula Inicial</span>
                 <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-700" />
               </div>
-              <p className="text-sm text-gray-500 mt-1">Estabelecimentos, turmas, alunos e profissionais.</p>
+              <p className="text-sm text-gray-500 mt-1">Unidades escolares, turmas, alunos e profissionais.</p>
             </Link>
             <Link href="/2-etapa" className="block p-3 rounded-lg bg-gray-50 hover:bg-green-50 transition-colors group">
               <div className="flex justify-between items-center">
@@ -85,19 +85,19 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* Card: Indicadores */}
+        {/* Card: Painéis de Resultados */}
         <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-purple-100 p-3 rounded-lg text-purple-700">
               <BarChart size={24} />
             </div>
-            <h3 className="text-xl font-bold text-gray-800">Indicadores & IDEB</h3>
+            <h3 className="text-xl font-bold text-gray-800">Painéis de Resultados</h3>
           </div>
           <p className="text-gray-600 mb-4">
-            Os dados coletados permitem calcular o Índice de Desenvolvimento da Educação Básica (Ideb), taxas de rendimento, fluxo escolar e distorção idade-série.
+            Acesse os painéis com indicadores educacionais, taxas de rendimento e dados estatísticos do Censo Escolar.
           </p>
-          <a href="#" className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1">
-            Acessar Painel de Indicadores <ArrowRight size={14} />
+          <a href="/paineis" className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1">
+            Acessar Painéis <ArrowRight size={14} />
           </a>
         </motion.div>
 
@@ -117,7 +117,7 @@ export default function Home() {
               <span className="font-bold text-gray-800">Estados/Municípios:</span> Treinam e acompanham o processo.
             </li>
             <li className="flex gap-2">
-              <span className="font-bold text-gray-800">Diretores:</span> Respondem ao Censo com veracidade.
+              <span className="font-bold text-gray-800">Unidade Escolar:</span> Respondem ao Censo com veracidade.
             </li>
           </ul>
         </motion.div>
