@@ -13,7 +13,7 @@ export default function Footer() {
                         A Gerência de Estatística e Censo Escolar é responsável pela coordenação e execução do Censo Escolar da Educação Básica no estado do Tocantins, garantindo a qualidade e fidedignidade dos dados educacionais.
                     </p>
                     <div className="pt-4">
-                        <img src="/imagens/Secretaria da Educação1- Branco.png" alt="Seduc TO" className="h-12 opacity-80" />
+                        <img src="/imagens/secretaria-da-educacao1-atual.png" alt="Seduc TO" className="h-12 opacity-80" />
                         <div className="font-bold text-lg mt-2">SEDUC/TO</div>
                     </div>
                 </div>
