@@ -9,7 +9,7 @@ export default function TopBar() {
                 {/* Left: Censo Logo */}
                 <div className="flex-1 flex justify-start w-full md:w-auto">
                     <Image
-                        src="/imagens/Censo EScolar Atual.png"
+                        src="/imagens/censo-escolar-atual.png"
                         alt="Logotipo do Censo Escolar"
                         width={180}
                         height={60}
@@ -35,10 +35,21 @@ export default function TopBar() {
                 {/* Divider 2 */}
                 <div className="hidden md:block w-px h-16 bg-gray-200"></div>
 
-                {/* Right: Seduc / Governo Text Block - Replaces the "Too Big" Logo */}
-                <div className="flex-1 flex flex-col items-end justify-center w-full md:w-auto text-right">
-                    <span className="text-xs uppercase tracking-widest text-[#0D6E3F] font-semibold">Secretaria da Educação</span>
-                    <span className="text-xs font-bold text-gray-400 mt-0.5">Governo do Tocantins</span>
+                {/* Right: Seduc / Governo Text Block - Now with GECE Logo */}
+                <div className="flex-1 flex items-center justify-end gap-3 w-full md:w-auto">
+                    <div className="flex flex-col items-end justify-center text-right">
+                        <span className="text-xs uppercase tracking-widest text-[#0D6E3F] font-semibold">Secretaria da Educação</span>
+                        <span className="text-xs font-bold text-gray-400 mt-0.5">Governo do Tocantins</span>
+                    </div>
+                    <div className="shrink-0">
+                        <Image
+                            src="/imagens/logo-gerencia-censo-transparente.png"
+                            alt="Logo GECE"
+                            width={80}
+                            height={80}
+                            className="h-16 w-16 md:h-20 md:w-20 object-contain rounded-full border-2 border-green-50 shadow-md transition-transform hover:scale-105"
+                        />
+                    </div>
                 </div>
 
             </div>

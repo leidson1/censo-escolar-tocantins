@@ -26,7 +26,7 @@ export default function Paineis() {
             descricao: "Dados das unidades escolares da rede estadual e municipal do Tocantins.",
             icone: School,
             cor: "bg-blue-100 text-blue-700",
-            link: "#",
+            link: "https://app.powerbi.com/view?r=eyJrIjoiMWUyNjkzYjQtOGFlYS00OWMxLWJlYjAtMGNlYmM2NmVhMzEzIiwidCI6IjE0M2U0OWFiLTdiOTEtNGM0NS04MjU3LTRiYjA4ZDhmMDcwNiJ9",
         },
         {
             id: 2,
@@ -34,7 +34,7 @@ export default function Paineis() {
             descricao: "Informações sobre turmas, horários e organização escolar.",
             icone: Users,
             cor: "bg-green-100 text-green-700",
-            link: "#",
+            link: "https://app.powerbi.com/view?r=eyJrIjoiMGFhOWVlYzgtNDc4ZC00OGQzLWFkYWYtMmU3OTkzZmE3YTY3IiwidCI6IjE0M2U0OWFiLTdiOTEtNGM0NS04MjU3LTRiYjA4ZDhmMDcwNiJ9&pageName=b670ba65b0c062c60451",
         },
         {
             id: 3,
@@ -42,7 +42,7 @@ export default function Paineis() {
             descricao: "Dados de matrículas, rendimento e movimento escolar dos estudantes.",
             icone: GraduationCap,
             cor: "bg-purple-100 text-purple-700",
-            link: "#",
+            link: "https://app.powerbi.com/view?r=eyJrIjoiZWJkZDdlNDAtMDc1MC00ZmIzLWE2N2QtZDNjOTA0MWY2NTlkIiwidCI6IjE0M2U0OWFiLTdiOTEtNGM0NS04MjU3LTRiYjA4ZDhmMDcwNiJ9",
         },
         {
             id: 4,
@@ -50,7 +50,7 @@ export default function Paineis() {
             descricao: "Informações sobre docentes e profissionais da educação.",
             icone: Users,
             cor: "bg-orange-100 text-orange-700",
-            link: "#",
+            link: "https://app.powerbi.com/view?r=eyJrIjoiMDQzN2JlMTEtNTJiMi00MGE3LWI1MTItZDJiYjg0OWIwZjU0IiwidCI6IjE0M2U0OWFiLTdiOTEtNGM0NS04MjU3LTRiYjA4ZDhmMDcwNiJ9",
         },
         {
             id: 5,
@@ -66,7 +66,7 @@ export default function Paineis() {
             descricao: "Comparativos e resultados educacionais em âmbito nacional.",
             icone: FileBarChart,
             cor: "bg-red-100 text-red-700",
-            link: "#",
+            link: "https://app.powerbi.com/view?r=eyJrIjoiN2ViNDBjNDEtMTM0OC00ZmFhLWIyZWYtZjI1YjU0NzQzMTJhIiwidCI6IjI2ZjczODk3LWM4YWMtNGIxZS05NzhmLWVhNGMwNzc0MzRiZiJ9",
         },
     ];
 
@@ -76,6 +76,18 @@ export default function Paineis() {
             <div className="text-center bg-[#0D6E3F] text-white py-6 mb-10 shadow-md rounded-lg -mt-4">
                 <h2 className="m-0 font-bold text-2xl md:text-3xl">PAINÉIS DE RESULTADOS</h2>
                 <p className="mt-2 text-green-100 text-sm">Acesse os painéis interativos com dados educacionais do Tocantins</p>
+            </div>
+
+            {/* Info Section */}
+            <div className="max-w-[1100px] mx-auto px-4 mb-10">
+                <div className="bg-gradient-to-r from-green-50 to-white p-8 rounded-xl border border-green-100">
+                    <h3 className="text-[#0D6E3F] font-bold text-xl mb-4">Sobre os Painéis</h3>
+                    <p className="text-gray-700 leading-relaxed text-justify">
+                        Os painéis interativos são ferramentas desenvolvidas para facilitar o acesso e a análise dos dados educacionais do Estado do Tocantins.
+                        Eles permitem visualizar informações sobre matrículas, indicadores de rendimento, IDEB e outros dados importantes para o acompanhamento
+                        da educação básica. Os dados são atualizados periodicamente com base no Censo Escolar.
+                    </p>
+                </div>
             </div>
 
             {/* Cards Grid */}
@@ -107,18 +119,6 @@ export default function Paineis() {
                     );
                 })}
             </motion.div>
-
-            {/* Info Section */}
-            <div className="max-w-[1100px] mx-auto px-4 mb-10">
-                <div className="bg-gradient-to-r from-green-50 to-white p-8 rounded-xl border border-green-100">
-                    <h3 className="text-[#0D6E3F] font-bold text-xl mb-4">Sobre os Painéis</h3>
-                    <p className="text-gray-700 leading-relaxed text-justify">
-                        Os painéis interativos são ferramentas desenvolvidas para facilitar o acesso e a análise dos dados educacionais do Estado do Tocantins.
-                        Eles permitem visualizar informações sobre matrículas, indicadores de rendimento, IDEB e outros dados importantes para o acompanhamento
-                        da educação básica. Os dados são atualizados periodicamente com base no Censo Escolar.
-                    </p>
-                </div>
-            </div>
         </MainLayout>
     );
 }
