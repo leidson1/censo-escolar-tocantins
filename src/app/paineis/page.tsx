@@ -58,7 +58,7 @@ export default function Paineis() {
             descricao: "Taxa de distorção idade série do Tocantins, a nível de Estado, Município e Brasil.",
             icone: BarChart3,
             cor: "bg-teal-100 text-teal-700",
-            link: "https://app.powerbi.com/view?r=eyJrIjoiMDE0YzgwY2ItYjYzYi00OGQyLWJjZWEtOTVjMzRmYzAyYTkyIiwidCI6IjE0M2U0OWFiLTdiOTEtNGM0NS04MjU3LTRiYjA4ZDhmMDcwNiJ9",
+            link: "https://app.powerbi.com/view?r=eyJrIjoiMDE0YzgwY2ItYjYzYi00OGQyLWJjZWEtOTVjMzRmYzAyYTkyIiwidCI6IjE0M2U0OWFiLTdiOTEtNGM0NS04MjU3LTRiYjA4ZDhmMDcwNiJ9&pageName=141161fa8dcc97223674",
         },
         {
             id: 6,
