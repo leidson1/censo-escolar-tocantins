@@ -79,7 +79,11 @@ export default function Footer() {
             </div>
 
             <div className="max-w-[1200px] mx-auto px-6 mt-16 pt-8 border-t border-white/10 text-center text-xs text-gray-400">
-                <p>© 2026 Gerência de Estatística e Censo Escolar - SEDUC/TO. Todos os direitos reservados.</p>
+                <p>
+                    Superintendência de Educação Científica, Tecnológica e Profissional<br />
+                    Diretoria de Tecnologia da Informação<br />
+                    Gerência de Estatística e Censo Escolar - Todos os Direitos Reservados © 2026
+                </p>
             </div>
         </footer>
     );
