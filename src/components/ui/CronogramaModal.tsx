@@ -26,7 +26,7 @@ export default function CronogramaModal({ isOpen, onClose }: CronogramaModalProp
                 <p className="mb-6 text-gray-700 mt-4">Datas importantes para a declaração da Situação do Aluno:</p>
 
                 <div className="mb-5 p-4 border-l-4 border-[#0D6E3F] bg-[#f1f8f3] rounded">
-                    <h4 className="text-[#0D6E3F] text-lg font-bold mb-2">📌 02/02/2026 a 13/03/2026 (Período de Coleta)</h4>
+                    <h4 className="text-[#0D6E3F] text-lg font-bold mb-2">📌 19/02/2026 a 30/03/2026 (Período de Coleta)</h4>
                     <ul className="list-disc pl-5 text-base">
                         <li>Disponibilização da funcionalidade Situação do Aluno no Sistema Educacenso.</li>
                         <li>Digitação e exportação dos dados de rendimento e movimento escolar.</li>
@@ -37,7 +37,7 @@ export default function CronogramaModal({ isOpen, onClose }: CronogramaModalProp
                 </div>
 
                 <div className="mb-5 p-4 border-l-4 border-[#0D6E3F] bg-[#f1f8f3] rounded">
-                    <h4 className="text-[#0D6E3F] text-lg font-bold mb-2">📌 01/04/2026 a 15/04/2026 (Período de Retificação)</h4>
+                    <h4 className="text-[#0D6E3F] text-lg font-bold mb-2">📌 31/03/2026 a 14/04/2026 (Período de Retificação)</h4>
                     <ul className="list-disc pl-5 text-base">
                         <li>Conferência, ratificação e correção de eventuais inconsistências nos dados.</li>
                     </ul>
