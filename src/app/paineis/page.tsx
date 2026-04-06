@@ -21,6 +21,14 @@ export default function Paineis() {
 
     const paineis = [
         {
+            id: 7,
+            titulo: "Sinópse Estatística Censo Escolar 2025",
+            descricao: "Visão geral e indicadores resumidos do Censo Escolar de 2025.",
+            icone: FileBarChart,
+            cor: "bg-indigo-100 text-indigo-700",
+            link: "https://app.powerbi.com/view?r=eyJrIjoiZTRlZTc2YWEtZjFhNy00ZTJiLWE0YzYtYzg2NDg3NWVhNjAzIiwidCI6IjE0M2U0OWFiLTdiOTEtNGM0NS04MjU3LTRiYjA4ZDhmMDcwNiJ9",
+        },
+        {
             id: 1,
             titulo: "Unidade Escolar",
             descricao: "Dados das unidades escolares da rede estadual e municipal do Tocantins.",
@@ -104,6 +112,22 @@ export default function Paineis() {
                             key={painel.id}
                             href={painel.link}
                             target="_blank"
+                            onClick={(e) => {
+                                if (painel.titulo === "TDI") {
+                                    e.preventDefault();
+                                    const code = window.prompt("Por favor, insira o código de acesso:");
+                                    if (code === "@censo@123645") {
+                                        // Attempt to open in new tab
+                                        const newWin = window.open(painel.link, "_blank", "noopener,noreferrer");
+                                        // If blocked by popup blocker, redirect in same tab
+                                        if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+                                            window.location.href = painel.link;
+                                        }
+                                    } else if (code !== null) {
+                                        window.alert("Código incorreto!");
+                                    }
+                                }
+                            }}
                             variants={itemVariants}
                             className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 aspect-square flex flex-col items-center justify-center text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
                         >
