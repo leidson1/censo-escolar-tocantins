@@ -72,6 +72,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 <span className="font-medium">2ª Etapa: Situação do Aluno</span>
                             </Link>
 
+                            <Link href="/censo-2025" onClick={onClose} className="flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors">
+                                <BarChart3 size={20} />
+                                <span className="font-medium">Censo Escolar 2025</span>
+                            </Link>
+
                             <Link href="/paineis" onClick={onClose} className="flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors">
                                 <BarChart3 size={20} />
                                 <span className="font-medium">Painéis de Resultados</span>

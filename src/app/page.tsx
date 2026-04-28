@@ -1,7 +1,7 @@
 "use client";
 
 import MainLayout from "@/components/layout/MainLayout";
-import { ArrowRight, BookOpen, UserCheck, BarChart, GraduationCap } from "lucide-react";
+import { ArrowRight, BookOpen, UserCheck, BarChart, GraduationCap, School } from "lucide-react";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
 
@@ -99,6 +99,22 @@ export default function Home() {
           <a href="/paineis" className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1">
             Acessar Painéis <ArrowRight size={14} />
           </a>
+        </motion.div>
+
+        {/* Card: Censo Escolar 2025 */}
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-green-100 p-3 rounded-lg text-[#0D6E3F]">
+              <School size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800">Censo Escolar 2025</h3>
+          </div>
+          <p className="text-gray-600 mb-4">
+            Consulte os dados detalhados das escolas, infraestrutura e recursos coletados no Censo Escolar 2025.
+          </p>
+          <Link href="/censo-2025" className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1">
+            Acessar Dados <ArrowRight size={14} />
+          </Link>
         </motion.div>
 
         {/* Card: Responsabilidades */}

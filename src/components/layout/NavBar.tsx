@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ListOrdered, GraduationCap } from "lucide-react";
+import { Home, ListOrdered, GraduationCap, School } from "lucide-react";
 
 export default function NavBar() {
     const pathname = usePathname();
@@ -35,6 +35,11 @@ export default function NavBar() {
                 <Link href="/2-etapa" className={getLinkClass("/2-etapa")}>
                     <GraduationCap size={18} />
                     <span>2ª Etapa: Situação do Aluno</span>
+                </Link>
+
+                <Link href="/censo-2025" className={getLinkClass("/censo-2025")}>
+                    <School size={18} />
+                    <span>Censo Escolar 2025</span>
                 </Link>
 
             </div>
