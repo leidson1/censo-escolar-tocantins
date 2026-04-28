@@ -50,7 +50,7 @@ interface Gestor {
   QT_GEST_BAS_ESPEC_GESTAO: number;
   QT_GEST_BAS_ESPEC_EDUC_TIC: number;
   QT_GEST_BAS_ESPEC_NENHUM: number;
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 interface GestoresDashboardProps {

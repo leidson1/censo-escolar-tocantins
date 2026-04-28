@@ -46,7 +46,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
   const [searchTerm, setSearchTerm] = useState("");
   const [municipioFilter, setMunicipioFilter] = useState("Todos");
   const [redeFilter, setRedeFilter] = useState("Todas");
-  const [selectedSchool, setSelectedSchool] = useState<Record<string, unknown> | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState<any | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [rawSearch, setRawSearch] = useState("");
 
@@ -228,9 +228,9 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
             >
               <div className="p-6 bg-gradient-to-r from-[#0D6E3F] to-green-600 text-white flex justify-between items-center">
                 <div>
-                  <h2 className="text-2xl font-bold">{selectedSchool.NO_ENTIDADE}</h2>
+                  <h2 className="text-2xl font-bold">{String(selectedSchool.NO_ENTIDADE)}</h2>
                   <p className="text-green-100 text-sm flex items-center gap-2">
-                    <MapPin size={14} /> {selectedSchool.NO_MUNICIPIO} - TO | INEP: {selectedSchool.CO_ENTIDADE}
+                    <MapPin size={14} /> {String(selectedSchool.NO_MUNICIPIO)} - TO | INEP: {String(selectedSchool.CO_ENTIDADE)}
                   </p>
                 </div>
                 <button onClick={() => setSelectedSchool(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -242,62 +242,62 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                 {/* Structured sections */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <DetailSection title="Infraestrutura Básica">
-                    <DetailItem label="Água Potável" value={selectedSchool.IN_AGUA_POTAVEL ? "Sim" : "Não"} active={selectedSchool.IN_AGUA_POTAVEL} />
-                    <DetailItem label="Energia Elétrica" value={selectedSchool.IN_ENERGIA_REDE_PUBLICA ? "Sim" : "Não"} active={selectedSchool.IN_ENERGIA_REDE_PUBLICA} />
-                    <DetailItem label="Esgoto Sanitário" value={selectedSchool.IN_ESGOTO_REDE_PUBLICA ? "Sim" : "Não"} active={selectedSchool.IN_ESGOTO_REDE_PUBLICA} />
-                    <DetailItem label="Coleta de Lixo" value={selectedSchool.IN_LIXO_SERVICO_COLETA ? "Sim" : "Não"} active={selectedSchool.IN_LIXO_SERVICO_COLETA} />
-                    <DetailItem label="Alimentação Escolar" value={selectedSchool.IN_ALIMENTACAO ? "Sim" : "Não"} active={selectedSchool.IN_ALIMENTACAO} />
-                    <DetailItem label="Início Ano Letivo" value={selectedSchool.DT_ANO_LETIVO_INICIO} />
-                    <DetailItem label="Término Ano Letivo" value={selectedSchool.DT_ANO_LETIVO_TERMINO} />
+                    <DetailItem label="Água Potável" value={selectedSchool.IN_AGUA_POTAVEL ? "Sim" : "Não"} active={!!selectedSchool.IN_AGUA_POTAVEL} />
+                    <DetailItem label="Energia Elétrica" value={selectedSchool.IN_ENERGIA_REDE_PUBLICA ? "Sim" : "Não"} active={!!selectedSchool.IN_ENERGIA_REDE_PUBLICA} />
+                    <DetailItem label="Esgoto Sanitário" value={selectedSchool.IN_ESGOTO_REDE_PUBLICA ? "Sim" : "Não"} active={!!selectedSchool.IN_ESGOTO_REDE_PUBLICA} />
+                    <DetailItem label="Coleta de Lixo" value={selectedSchool.IN_LIXO_SERVICO_COLETA ? "Sim" : "Não"} active={!!selectedSchool.IN_LIXO_SERVICO_COLETA} />
+                    <DetailItem label="Alimentação Escolar" value={selectedSchool.IN_ALIMENTACAO ? "Sim" : "Não"} active={!!selectedSchool.IN_ALIMENTACAO} />
+                    <DetailItem label="Início Ano Letivo" value={String(selectedSchool.DT_ANO_LETIVO_INICIO)} />
+                    <DetailItem label="Término Ano Letivo" value={String(selectedSchool.DT_ANO_LETIVO_TERMINO)} />
                   </DetailSection>
 
                   <DetailSection title="Tecnologia e TI">
-                    <DetailItem label="Internet" value={selectedSchool.IN_INTERNET ? "Sim" : "Não"} active={selectedSchool.IN_INTERNET} />
-                    <DetailItem label="Banda Larga" value={selectedSchool.IN_BANDA_LARGA ? "Sim" : "Não"} active={selectedSchool.IN_BANDA_LARGA} />
-                    <DetailItem label="Laboratório Informática" value={selectedSchool.IN_LABORATORIO_INFORMATICA ? "Sim" : "Não"} active={selectedSchool.IN_LABORATORIO_INFORMATICA} />
-                    <DetailItem label="Desktops Alunos" value={selectedSchool.QT_DESKTOP_ALUNO || 0} />
-                    <DetailItem label="Laptops Alunos" value={selectedSchool.QT_COMP_PORTATIL_ALUNO || 0} />
-                    <DetailItem label="Tablets Alunos" value={selectedSchool.QT_TABLET_ALUNO || 0} />
+                    <DetailItem label="Internet" value={selectedSchool.IN_INTERNET ? "Sim" : "Não"} active={!!selectedSchool.IN_INTERNET} />
+                    <DetailItem label="Banda Larga" value={selectedSchool.IN_BANDA_LARGA ? "Sim" : "Não"} active={!!selectedSchool.IN_BANDA_LARGA} />
+                    <DetailItem label="Laboratório Informática" value={selectedSchool.IN_LABORATORIO_INFORMATICA ? "Sim" : "Não"} active={!!selectedSchool.IN_LABORATORIO_INFORMATICA} />
+                    <DetailItem label="Desktops Alunos" value={Number(selectedSchool.QT_DESKTOP_ALUNO) || 0} />
+                    <DetailItem label="Laptops Alunos" value={Number(selectedSchool.QT_COMP_PORTATIL_ALUNO) || 0} />
+                    <DetailItem label="Tablets Alunos" value={Number(selectedSchool.QT_TABLET_ALUNO) || 0} />
                     <DetailItem label="Acesso para Comunidade" value={selectedSchool.IN_INTERNET_COMUNIDADE ? "Sim" : "Não"} />
                   </DetailSection>
 
                   <DetailSection title="Espaços Físicos">
-                    <DetailItem label="Total de Salas" value={selectedSchool.QT_SALAS_UTILIZADAS || 0} />
-                    <DetailItem label="Salas Climatizadas" value={selectedSchool.QT_SALAS_UTILIZA_CLIMATIZADAS || 0} />
-                    <DetailItem label="Biblioteca" value={selectedSchool.IN_BIBLIOTECA ? "Sim" : "Não"} active={selectedSchool.IN_BIBLIOTECA} />
-                    <DetailItem label="Quadra Esportes" value={selectedSchool.IN_QUADRA_ESPORTES ? "Sim" : "Não"} active={selectedSchool.IN_QUADRA_ESPORTES} />
-                    <DetailItem label="Refeitório" value={selectedSchool.IN_REFEITORIO ? "Sim" : "Não"} />
-                    <DetailItem label="Cozinha" value={selectedSchool.IN_COZINHA ? "Sim" : "Não"} />
-                    <DetailItem label="Piscina" value={selectedSchool.IN_PISCINA ? "Sim" : "Não"} />
-                    <DetailItem label="Parque Infantil" value={selectedSchool.IN_PARQUE_INFANTIL ? "Sim" : "Não"} />
+                    <DetailItem label="Total de Salas" value={Number(selectedSchool.QT_SALAS_UTILIZADAS) || 0} />
+                    <DetailItem label="Salas Climatizadas" value={Number(selectedSchool.QT_SALAS_UTILIZA_CLIMATIZADAS) || 0} />
+                    <DetailItem label="Biblioteca" value={selectedSchool.IN_BIBLIOTECA ? "Sim" : "Não"} active={!!selectedSchool.IN_BIBLIOTECA} />
+                    <DetailItem label="Quadra Esportes" value={selectedSchool.IN_QUADRA_ESPORTES ? "Sim" : "Não"} active={!!selectedSchool.IN_QUADRA_ESPORTES} />
+                    <DetailItem label="Refeitório" value={selectedSchool.IN_REFEITORIO ? "Sim" : "Não"} active={!!selectedSchool.IN_REFEITORIO} />
+                    <DetailItem label="Cozinha" value={selectedSchool.IN_COZINHA ? "Sim" : "Não"} active={!!selectedSchool.IN_COZINHA} />
+                    <DetailItem label="Piscina" value={selectedSchool.IN_PISCINA ? "Sim" : "Não"} active={!!selectedSchool.IN_PISCINA} />
+                    <DetailItem label="Parque Infantil" value={selectedSchool.IN_PARQUE_INFANTIL ? "Sim" : "Não"} active={!!selectedSchool.IN_PARQUE_INFANTIL} />
                   </DetailSection>
 
                   <DetailSection title="Equipamentos">
-                    <DetailItem label="TVs" value={selectedSchool.QT_EQUIP_TV || 0} />
-                    <DetailItem label="Aparelhos de Som" value={selectedSchool.QT_EQUIP_SOM || 0} />
-                    <DetailItem label="Lousas Digitais" value={selectedSchool.QT_EQUIP_LOUSA_DIGITAL || 0} />
-                    <DetailItem label="Projetores (DataShow)" value={selectedSchool.QT_EQUIP_MULTIMIDIA || 0} />
-                    <DetailItem label="Impressoras" value={selectedSchool.IN_EQUIP_IMPRESSORA ? "Sim" : "Não"} />
-                    <DetailItem label="Copiadoras" value={selectedSchool.IN_EQUIP_COPIADORA ? "Sim" : "Não"} />
+                    <DetailItem label="TVs" value={Number(selectedSchool.QT_EQUIP_TV) || 0} />
+                    <DetailItem label="Aparelhos de Som" value={Number(selectedSchool.QT_EQUIP_SOM) || 0} />
+                    <DetailItem label="Lousas Digitais" value={Number(selectedSchool.QT_EQUIP_LOUSA_DIGITAL) || 0} />
+                    <DetailItem label="Projetores (DataShow)" value={Number(selectedSchool.QT_EQUIP_MULTIMIDIA) || 0} />
+                    <DetailItem label="Impressoras" value={selectedSchool.IN_EQUIP_IMPRESSORA ? "Sim" : "Não"} active={!!selectedSchool.IN_EQUIP_IMPRESSORA} />
+                    <DetailItem label="Copiadoras" value={selectedSchool.IN_EQUIP_COPIADORA ? "Sim" : "Não"} active={!!selectedSchool.IN_EQUIP_COPIADORA} />
                   </DetailSection>
 
                   <DetailSection title="Recursos Humanos">
-                    <DetailItem label="Prof. Administrativos" value={selectedSchool.QT_PROF_ADMINISTRATIVOS || 0} />
-                    <DetailItem label="Prof. Serviços Gerais" value={selectedSchool.QT_PROF_SERVICOS_GERAIS || 0} />
-                    <DetailItem label="Bibliotecário" value={selectedSchool.QT_PROF_BIBLIOTECARIO || 0} />
-                    <DetailItem label="Psicólogo" value={selectedSchool.QT_PROF_PSICOLOGO || 0} />
-                    <DetailItem label="Nutricionista" value={selectedSchool.QT_PROF_NUTRICIONISTA || 0} />
-                    <DetailItem label="Assistente Social" value={selectedSchool.QT_PROF_ASSIST_SOCIAL || 0} />
-                    <DetailItem label="Segurança/Vigilante" value={selectedSchool.QT_PROF_SEGURANCA || 0} />
+                    <DetailItem label="Prof. Administrativos" value={Number(selectedSchool.QT_PROF_ADMINISTRATIVOS) || 0} />
+                    <DetailItem label="Prof. Serviços Gerais" value={Number(selectedSchool.QT_PROF_SERVICOS_GERAIS) || 0} />
+                    <DetailItem label="Bibliotecário" value={Number(selectedSchool.QT_PROF_BIBLIOTECARIO) || 0} />
+                    <DetailItem label="Psicólogo" value={Number(selectedSchool.QT_PROF_PSICOLOGO) || 0} />
+                    <DetailItem label="Nutricionista" value={Number(selectedSchool.QT_PROF_NUTRICIONISTA) || 0} />
+                    <DetailItem label="Assistente Social" value={Number(selectedSchool.QT_PROF_ASSIST_SOCIAL) || 0} />
+                    <DetailItem label="Segurança/Vigilante" value={Number(selectedSchool.QT_PROF_SEGURANCA) || 0} />
                   </DetailSection>
 
                   <DetailSection title="Etapas de Ensino">
-                    <DetailItem label="Ensino Regular" value={selectedSchool.IN_REGULAR ? "Sim" : "Não"} active={selectedSchool.IN_REGULAR} />
-                    <DetailItem label="Educação Especial" value={selectedSchool.IN_ESPECIAL_EXCLUSIVA ? "Sim" : "Não"} />
-                    <DetailItem label="EJA" value={selectedSchool.IN_EJA ? "Sim" : "Não"} />
-                    <DetailItem label="Ensino Profissional" value={selectedSchool.IN_PROFISSIONALIZANTE ? "Sim" : "Não"} />
-                    <DetailItem label="Ensino Fundamental AF" value={selectedSchool.IN_COMUM_FUND_AF ? "Sim" : "Não"} />
-                    <DetailItem label="Ensino Médio" value={selectedSchool.IN_COMUM_MEDIO_MEDIO ? "Sim" : "Não"} />
+                    <DetailItem label="Ensino Regular" value={selectedSchool.IN_REGULAR ? "Sim" : "Não"} active={!!selectedSchool.IN_REGULAR} />
+                    <DetailItem label="Educação Especial" value={selectedSchool.IN_ESPECIAL_EXCLUSIVA ? "Sim" : "Não"} active={!!selectedSchool.IN_ESPECIAL_EXCLUSIVA} />
+                    <DetailItem label="EJA" value={selectedSchool.IN_EJA ? "Sim" : "Não"} active={!!selectedSchool.IN_EJA} />
+                    <DetailItem label="Ensino Profissional" value={selectedSchool.IN_PROFISSIONALIZANTE ? "Sim" : "Não"} active={!!selectedSchool.IN_PROFISSIONALIZANTE} />
+                    <DetailItem label="Ensino Fundamental AF" value={selectedSchool.IN_COMUM_FUND_AF ? "Sim" : "Não"} active={!!selectedSchool.IN_COMUM_FUND_AF} />
+                    <DetailItem label="Ensino Médio" value={selectedSchool.IN_COMUM_MEDIO_MEDIO ? "Sim" : "Não"} active={!!selectedSchool.IN_COMUM_MEDIO_MEDIO} />
                   </DetailSection>
                 </div>
 
@@ -310,11 +310,11 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                     <MapPin size={14} /> Localização e Endereço Oficial
                   </h4>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p><span className="font-semibold">Endereço:</span> {selectedSchool.DS_ENDERECO}, {selectedSchool.NU_ENDERECO}</p>
-                    {selectedSchool.DS_COMPLEMENTO && <p><span className="font-semibold">Complemento:</span> {selectedSchool.DS_COMPLEMENTO}</p>}
-                    <p><span className="font-semibold">Bairro:</span> {selectedSchool.NO_BAIRRO || "Não informado"}</p>
-                    <p><span className="font-semibold">CEP:</span> {selectedSchool.CO_CEP} | <span className="font-semibold">Município:</span> {selectedSchool.NO_MUNICIPIO} - TO</p>
-                    <p><span className="font-semibold">Telefone:</span> ({selectedSchool.NU_DDD}) {selectedSchool.NU_TELEFONE}</p>
+                    <p><span className="font-semibold">Endereço:</span> {String(selectedSchool.DS_ENDERECO)}, {String(selectedSchool.NU_ENDERECO)}</p>
+                    {!!selectedSchool.DS_COMPLEMENTO && <p><span className="font-semibold">Complemento:</span> {String(selectedSchool.DS_COMPLEMENTO)}</p>}
+                    <p><span className="font-semibold">Bairro:</span> {String(selectedSchool.NO_BAIRRO || "Não informado")}</p>
+                    <p><span className="font-semibold">CEP:</span> {String(selectedSchool.CO_CEP)} | <span className="font-semibold">Município:</span> {String(selectedSchool.NO_MUNICIPIO)} - TO</p>
+                    <p><span className="font-semibold">Telefone:</span> ({String(selectedSchool.NU_DDD)}) {String(selectedSchool.NU_TELEFONE)}</p>
                   </div>
                 </div>
               </div>
@@ -414,7 +414,7 @@ export function RawDataSection({ data, accentColor = "green" }: { data: Record<s
                   </span>
                   {/* Show original numeric code if category mapped */}
                   {hasCategory && displayVal !== String(value) && (
-                    <span className="text-[10px] text-gray-300">({value})</span>
+                    <span className="text-[10px] text-gray-300">({String(value)})</span>
                   )}
                 </div>
               </div>

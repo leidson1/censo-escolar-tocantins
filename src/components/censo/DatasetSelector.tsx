@@ -119,11 +119,11 @@ export default function DatasetSelector({
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
         >
-          {active === "escolas" && <CensoDashboard schools={schools} stats={stats} />}
-          {active === "gestores" && <GestoresDashboard gestores={gestores} />}
+          {active === "escolas" && <CensoDashboard schools={schools as any} stats={stats as any} />}
+          {active === "gestores" && <GestoresDashboard gestores={gestores as any} />}
           {active === "docentes" && (
             <GenericCensoDashboard
-              data={docentes}
+              data={docentes as any}
               color="purple"
               searchPlaceholder="Buscar por escola..."
               kpiFields={[
@@ -136,7 +136,7 @@ export default function DatasetSelector({
           )}
           {active === "matriculas" && (
             <GenericCensoDashboard
-              data={matriculas}
+              data={matriculas as any}
               color="blue"
               searchPlaceholder="Buscar por escola..."
               kpiFields={[
@@ -149,7 +149,7 @@ export default function DatasetSelector({
           )}
           {active === "turmas" && (
             <GenericCensoDashboard
-              data={turmas}
+              data={turmas as any}
               color="teal"
               searchPlaceholder="Buscar por escola..."
               kpiFields={[
@@ -162,7 +162,7 @@ export default function DatasetSelector({
           )}
           {active === "cursos" && (
             <GenericCensoDashboard
-              data={cursosTecnicos}
+              data={cursosTecnicos as any}
               color="rose"
               searchPlaceholder="Buscar por curso ou escola..."
               kpiFields={[

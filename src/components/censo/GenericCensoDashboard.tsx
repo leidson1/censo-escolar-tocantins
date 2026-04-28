@@ -13,7 +13,7 @@ interface GenericRecord {
   MUNICIPIO: string;
   TP_DEPENDENCIA?: number;
   TP_LOCALIZACAO?: number;
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 interface KpiDef {
@@ -240,13 +240,13 @@ export default function GenericCensoDashboard({
                 "from-rose-700 to-rose-500"
               }`}>
                 <div>
-                  <h2 className="text-xl font-bold leading-tight">{selected.UNIDADE}</h2>
+                  <h2 className="text-xl font-bold leading-tight">{String(selected.UNIDADE)}</h2>
                   <p className="text-white/70 text-xs mt-1">
-                    {selected.MUNICIPIO} · INEP: {selected.CO_ENTIDADE} · {REDE[selected.TP_DEPENDENCIA ?? 0]} · {LOCAL[selected.TP_LOCALIZACAO ?? 0]}
+                    {String(selected.MUNICIPIO)} · INEP: {String(selected.CO_ENTIDADE)} · {REDE[Number(selected.TP_DEPENDENCIA) ?? 0]} · {LOCAL[Number(selected.TP_LOCALIZACAO) ?? 0]}
                   </p>
-                  {selected.NO_AREA_CURSO_PROFISSIONAL && (
+                  {!!selected.NO_AREA_CURSO_PROFISSIONAL && (
                     <p className="text-white/80 text-sm mt-1 font-medium">
-                      {selected.NO_AREA_CURSO_PROFISSIONAL} — {selected.NO_CURSO_EDUC_PROFISSIONAL}
+                      {String(selected.NO_AREA_CURSO_PROFISSIONAL)} — {String(selected.NO_CURSO_EDUC_PROFISSIONAL)}
                     </p>
                   )}
                 </div>
