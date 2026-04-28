@@ -73,19 +73,6 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
     setIsLoadingDetails(false);
   };
 
-  // Filter raw data entries based on search
-  const rawEntries = useMemo(() => {
-    if (!selectedSchool) return [];
-    const term = rawSearch.toLowerCase();
-    return Object.entries(selectedSchool).filter(([key, value]) => {
-      if (value === null || value === undefined || value === "") return false;
-      if (!term) return true;
-      const label = getLabel(key).toLowerCase();
-      const valStr = getValueLabel(key, value).toLowerCase();
-      return key.toLowerCase().includes(term) || label.includes(term) || valStr.includes(term);
-    });
-  }, [selectedSchool, rawSearch]);
-
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
@@ -247,8 +234,6 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                     <DetailItem label="Esgoto Sanitário" value={selectedSchool.IN_ESGOTO_REDE_PUBLICA ? "Sim" : "Não"} active={!!selectedSchool.IN_ESGOTO_REDE_PUBLICA} />
                     <DetailItem label="Coleta de Lixo" value={selectedSchool.IN_LIXO_SERVICO_COLETA ? "Sim" : "Não"} active={!!selectedSchool.IN_LIXO_SERVICO_COLETA} />
                     <DetailItem label="Alimentação Escolar" value={selectedSchool.IN_ALIMENTACAO ? "Sim" : "Não"} active={!!selectedSchool.IN_ALIMENTACAO} />
-                    <DetailItem label="Início Ano Letivo" value={String(selectedSchool.DT_ANO_LETIVO_INICIO)} />
-                    <DetailItem label="Término Ano Letivo" value={String(selectedSchool.DT_ANO_LETIVO_TERMINO)} />
                   </DetailSection>
 
                   <DetailSection title="Tecnologia e TI">
@@ -256,53 +241,11 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                     <DetailItem label="Banda Larga" value={selectedSchool.IN_BANDA_LARGA ? "Sim" : "Não"} active={!!selectedSchool.IN_BANDA_LARGA} />
                     <DetailItem label="Laboratório Informática" value={selectedSchool.IN_LABORATORIO_INFORMATICA ? "Sim" : "Não"} active={!!selectedSchool.IN_LABORATORIO_INFORMATICA} />
                     <DetailItem label="Desktops Alunos" value={Number(selectedSchool.QT_DESKTOP_ALUNO) || 0} />
-                    <DetailItem label="Laptops Alunos" value={Number(selectedSchool.QT_COMP_PORTATIL_ALUNO) || 0} />
-                    <DetailItem label="Tablets Alunos" value={Number(selectedSchool.QT_TABLET_ALUNO) || 0} />
-                    <DetailItem label="Acesso para Comunidade" value={selectedSchool.IN_INTERNET_COMUNIDADE ? "Sim" : "Não"} />
-                  </DetailSection>
-
-                  <DetailSection title="Espaços Físicos">
-                    <DetailItem label="Total de Salas" value={Number(selectedSchool.QT_SALAS_UTILIZADAS) || 0} />
-                    <DetailItem label="Salas Climatizadas" value={Number(selectedSchool.QT_SALAS_UTILIZA_CLIMATIZADAS) || 0} />
-                    <DetailItem label="Biblioteca" value={selectedSchool.IN_BIBLIOTECA ? "Sim" : "Não"} active={!!selectedSchool.IN_BIBLIOTECA} />
-                    <DetailItem label="Quadra Esportes" value={selectedSchool.IN_QUADRA_ESPORTES ? "Sim" : "Não"} active={!!selectedSchool.IN_QUADRA_ESPORTES} />
-                    <DetailItem label="Refeitório" value={selectedSchool.IN_REFEITORIO ? "Sim" : "Não"} active={!!selectedSchool.IN_REFEITORIO} />
-                    <DetailItem label="Cozinha" value={selectedSchool.IN_COZINHA ? "Sim" : "Não"} active={!!selectedSchool.IN_COZINHA} />
-                    <DetailItem label="Piscina" value={selectedSchool.IN_PISCINA ? "Sim" : "Não"} active={!!selectedSchool.IN_PISCINA} />
-                    <DetailItem label="Parque Infantil" value={selectedSchool.IN_PARQUE_INFANTIL ? "Sim" : "Não"} active={!!selectedSchool.IN_PARQUE_INFANTIL} />
-                  </DetailSection>
-
-                  <DetailSection title="Equipamentos">
-                    <DetailItem label="TVs" value={Number(selectedSchool.QT_EQUIP_TV) || 0} />
-                    <DetailItem label="Aparelhos de Som" value={Number(selectedSchool.QT_EQUIP_SOM) || 0} />
-                    <DetailItem label="Lousas Digitais" value={Number(selectedSchool.QT_EQUIP_LOUSA_DIGITAL) || 0} />
-                    <DetailItem label="Projetores (DataShow)" value={Number(selectedSchool.QT_EQUIP_MULTIMIDIA) || 0} />
-                    <DetailItem label="Impressoras" value={selectedSchool.IN_EQUIP_IMPRESSORA ? "Sim" : "Não"} active={!!selectedSchool.IN_EQUIP_IMPRESSORA} />
-                    <DetailItem label="Copiadoras" value={selectedSchool.IN_EQUIP_COPIADORA ? "Sim" : "Não"} active={!!selectedSchool.IN_EQUIP_COPIADORA} />
-                  </DetailSection>
-
-                  <DetailSection title="Recursos Humanos">
-                    <DetailItem label="Prof. Administrativos" value={Number(selectedSchool.QT_PROF_ADMINISTRATIVOS) || 0} />
-                    <DetailItem label="Prof. Serviços Gerais" value={Number(selectedSchool.QT_PROF_SERVICOS_GERAIS) || 0} />
-                    <DetailItem label="Bibliotecário" value={Number(selectedSchool.QT_PROF_BIBLIOTECARIO) || 0} />
-                    <DetailItem label="Psicólogo" value={Number(selectedSchool.QT_PROF_PSICOLOGO) || 0} />
-                    <DetailItem label="Nutricionista" value={Number(selectedSchool.QT_PROF_NUTRICIONISTA) || 0} />
-                    <DetailItem label="Assistente Social" value={Number(selectedSchool.QT_PROF_ASSIST_SOCIAL) || 0} />
-                    <DetailItem label="Segurança/Vigilante" value={Number(selectedSchool.QT_PROF_SEGURANCA) || 0} />
-                  </DetailSection>
-
-                  <DetailSection title="Etapas de Ensino">
-                    <DetailItem label="Ensino Regular" value={selectedSchool.IN_REGULAR ? "Sim" : "Não"} active={!!selectedSchool.IN_REGULAR} />
-                    <DetailItem label="Educação Especial" value={selectedSchool.IN_ESPECIAL_EXCLUSIVA ? "Sim" : "Não"} active={!!selectedSchool.IN_ESPECIAL_EXCLUSIVA} />
-                    <DetailItem label="EJA" value={selectedSchool.IN_EJA ? "Sim" : "Não"} active={!!selectedSchool.IN_EJA} />
-                    <DetailItem label="Ensino Profissional" value={selectedSchool.IN_PROFISSIONALIZANTE ? "Sim" : "Não"} active={!!selectedSchool.IN_PROFISSIONALIZANTE} />
-                    <DetailItem label="Ensino Fundamental AF" value={selectedSchool.IN_COMUM_FUND_AF ? "Sim" : "Não"} active={!!selectedSchool.IN_COMUM_FUND_AF} />
-                    <DetailItem label="Ensino Médio" value={selectedSchool.IN_COMUM_MEDIO_MEDIO ? "Sim" : "Não"} active={!!selectedSchool.IN_COMUM_MEDIO_MEDIO} />
                   </DetailSection>
                 </div>
 
                 {/* Raw Data with Dictionary */}
-                <RawDataSection data={selectedSchool} accentColor="green" />
+                <RawDataSection data={selectedSchool} rawSearch={rawSearch} setRawSearch={setRawSearch} accentColor="green" />
 
                 {/* Address */}
                 <div className="mt-6 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -311,9 +254,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   </h4>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><span className="font-semibold">Endereço:</span> {String(selectedSchool.DS_ENDERECO)}, {String(selectedSchool.NU_ENDERECO)}</p>
-                    {!!selectedSchool.DS_COMPLEMENTO && <p><span className="font-semibold">Complemento:</span> {String(selectedSchool.DS_COMPLEMENTO)}</p>}
                     <p><span className="font-semibold">Bairro:</span> {String(selectedSchool.NO_BAIRRO || "Não informado")}</p>
-                    <p><span className="font-semibold">CEP:</span> {String(selectedSchool.CO_CEP)} | <span className="font-semibold">Município:</span> {String(selectedSchool.NO_MUNICIPIO)} - TO</p>
                     <p><span className="font-semibold">Telefone:</span> ({String(selectedSchool.NU_DDD)}) {String(selectedSchool.NU_TELEFONE)}</p>
                   </div>
                 </div>
@@ -328,19 +269,24 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
 
 // ── Shared Raw Data Section ────────────────────────────────────────────
 
-export function RawDataSection({ data, accentColor = "green" }: { data: Record<string, unknown>; accentColor?: "green" | "indigo" }) {
-  const [rawSearch, setRawSearch] = useState("");
-  const [showOnlyNonZero, setShowOnlyNonZero] = useState(false);
+const PREFIX_LABELS: Record<string, string> = {
+  "IN_": "Infraestrutura e Recursos",
+  "QT_": "Quantitativos e Totais",
+  "NO_": "Identificação e Nomes",
+  "TP_": "Tipos e Classificações",
+  "CO_": "Códigos e Chaves",
+  "NU_": "Numéricos e Datas",
+  "DS_": "Descrições",
+};
 
-  const ring   = accentColor === "green" ? "focus:ring-green-500" : "focus:ring-indigo-400";
-  const border = accentColor === "green" ? "border-green-500" : "border-indigo-500";
-  const text   = accentColor === "green" ? "text-[#0D6E3F]" : "text-indigo-700";
+export function RawDataSection({ data, rawSearch, setRawSearch, accentColor = "blue" }: { data: any, rawSearch: string, setRawSearch: (v: string) => void, accentColor?: string }) {
+  const [showOnlyNonZero, setShowOnlyNonZero] = useState(false);
 
   const entries = useMemo(() => {
     const term = rawSearch.toLowerCase();
     return Object.entries(data).filter(([key, value]) => {
       if (value === null || value === undefined || value === "") return false;
-      if (showOnlyNonZero && value === 0) return false;
+      if (showOnlyNonZero && (value === 0 || value === "0")) return false;
       if (!term) return true;
       const label = getLabel(key).toLowerCase();
       const valStr = getValueLabel(key, value).toLowerCase();
@@ -348,81 +294,121 @@ export function RawDataSection({ data, accentColor = "green" }: { data: Record<s
     });
   }, [data, rawSearch, showOnlyNonZero]);
 
-  return (
-    <div>
-      <h3 className={`font-bold text-gray-700 border-l-4 ${border} pl-3 text-xs uppercase tracking-wider mb-3 flex items-center gap-2`}>
-        <Database size={13} /> Todos os Campos do Censo (Dados Brutos)
-      </h3>
+  const groupedEntries = useMemo(() => {
+    const groups: Record<string, [string, any][]> = {};
+    entries.forEach(([key, value]) => {
+      const prefix = key.substring(0, 3);
+      const cat = PREFIX_LABELS[prefix] || "Outras Informações";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push([key, value]);
+    });
+    return groups;
+  }, [entries]);
 
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-3">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-          <input
-            type="text"
-            placeholder="Pesquisar campo, descrição ou valor..."
-            className={`w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 ${ring} outline-none text-xs`}
-            value={rawSearch}
-            onChange={e => setRawSearch(e.target.value)}
-          />
+  const colorMap: Record<string, string> = {
+    blue: "text-blue-500 bg-blue-50 border-blue-100",
+    green: "text-green-500 bg-green-50 border-green-100",
+    purple: "text-purple-500 bg-purple-50 border-purple-100",
+    indigo: "text-indigo-500 bg-indigo-50 border-indigo-100",
+    rose: "text-rose-500 bg-rose-50 border-rose-100",
+    teal: "text-teal-500 bg-teal-50 border-teal-100",
+    amber: "text-amber-500 bg-amber-50 border-amber-100",
+  };
+
+  const accent = colorMap[accentColor] || colorMap.blue;
+  const accentText = accent.split(" ")[0];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100 pb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <Database className={accentText} size={20} />
+            Dicionário de Variáveis e Dados Brutos
+          </h2>
+          <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider font-semibold">Exploração técnica de {entries.length} campos</p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-gray-500 bg-white border border-gray-200 rounded-xl px-3 py-2 cursor-pointer hover:border-gray-300 transition-colors whitespace-nowrap">
-          <input
-            type="checkbox"
-            checked={showOnlyNonZero}
-            onChange={e => setShowOnlyNonZero(e.target.checked)}
-            className="rounded"
-          />
-          Apenas valores &gt; 0
-        </label>
-        <span className="flex items-center text-xs text-gray-400 px-2">{entries.length} campos</span>
+        
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          <label className="flex items-center gap-2 text-xs text-gray-500 bg-white border border-gray-200 rounded-xl px-3 py-2 cursor-pointer hover:bg-gray-50 transition-all select-none shadow-sm">
+            <input
+              type="checkbox"
+              checked={showOnlyNonZero}
+              onChange={e => setShowOnlyNonZero(e.target.checked)}
+              className={`rounded focus:ring-2 focus:ring-offset-2 ${accentText}`}
+            />
+            Ocultar valores zerados
+          </label>
+          <div className="relative group">
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:${accentText} transition-colors`} size={16} />
+            <input
+              type="text"
+              placeholder="Pesquisar campos..."
+              className="w-full md:w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 focus:bg-white transition-all shadow-sm"
+              value={rawSearch}
+              onChange={(e) => setRawSearch(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0">
-          {entries.map(([key, value], i) => {
-            const entry = getDictEntry(key);
-            const label = entry?.descricao || key;
-            const displayVal = getValueLabel(key, value);
-            const hasCategory = !!entry?.categoria;
-            const isZero = value === 0;
+      <div className="space-y-10">
+        {Object.entries(groupedEntries).sort().map(([category, items]) => (
+          <div key={category} className="space-y-4">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-3">
+              <span className={`w-8 h-[2px] rounded-full bg-current ${accentText}`}></span>
+              {category}
+              <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[9px] font-bold">{items.length}</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-1">
+              {items.map(([key, value]) => {
+                const entry = getDictEntry(key);
+                const label = entry?.descricao || key;
+                const displayVal = getValueLabel(key, value);
+                const isZero = value === 0 || value === "0";
 
-            return (
-              <div
-                key={key}
-                className={`flex items-start justify-between gap-3 px-4 py-2.5 border-b border-gray-50 group ${
-                  i % 2 === 0 ? "" : "md:border-l border-gray-50"
-                } ${isZero ? "opacity-50" : ""}`}
-              >
-                <div className="flex-1 min-w-0">
-                  {/* Human label */}
-                  <div className={`text-xs font-medium leading-tight ${isZero ? "text-gray-400" : "text-gray-700"}`}>
-                    {label !== key ? label : <span className="font-mono text-[10px] text-gray-400 uppercase">{key}</span>}
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-start justify-between gap-4 px-3 py-2 rounded-xl transition-all group border border-transparent hover:bg-white hover:shadow-md hover:border-gray-100 ${
+                      isZero ? "opacity-30 grayscale" : ""
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-[11px] font-bold text-gray-700 leading-tight truncate group-hover:${accentText}`} title={label}>
+                        {label !== key ? label : key}
+                      </div>
+                      <div className="text-[9px] font-mono text-gray-300 uppercase mt-0.5" title="Nome técnico da variável">{key}</div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className={`text-[11px] font-black ${isZero ? "text-gray-400" : accentText}`}>
+                        {displayVal}
+                      </div>
+                      {(displayVal !== String(value)) && (
+                        <div className="text-[9px] text-gray-300 font-mono italic">({value})</div>
+                      )}
+                    </div>
                   </div>
-                  {/* Technical key as tooltip */}
-                  {label !== key && (
-                    <div className="text-[10px] font-mono text-gray-300 uppercase truncate" title={key}>{key}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <span className={`text-xs font-bold text-right ${
-                    isZero ? "text-gray-300" :
-                    hasCategory && displayVal !== String(value) ? text :
-                    "text-gray-700"
-                  }`}>
-                    {displayVal}
-                  </span>
-                  {/* Show original numeric code if category mapped */}
-                  {hasCategory && displayVal !== String(value) && (
-                    <span className="text-[10px] text-gray-300">({String(value)})</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
         {entries.length === 0 && (
-          <div className="p-8 text-center text-gray-400 text-sm">Nenhum campo encontrado.</div>
+          <div className="py-24 flex flex-col items-center justify-center text-gray-300 border-2 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/30">
+            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 border border-gray-100">
+              <HelpCircle size={32} className={`opacity-20 ${accentText}`} />
+            </div>
+            <p className="text-sm font-bold text-gray-400">Nenhum campo encontrado</p>
+            <p className="text-xs text-gray-300 mt-1">Tente ajustar seus termos de busca ou filtros</p>
+            <button 
+              onClick={() => { setRawSearch(""); setShowOnlyNonZero(false); }}
+              className={`mt-6 px-6 py-2 bg-white border border-gray-200 rounded-xl text-[10px] uppercase tracking-widest font-bold ${accentText} hover:bg-gray-50 hover:border-blue-200 transition-all shadow-sm`}
+            >
+              Resetar Filtros
+            </button>
+          </div>
         )}
       </div>
     </div>

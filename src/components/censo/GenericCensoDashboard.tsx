@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, UserCircle, X, School } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, UserCircle, X, School, Users, GraduationCap, Layout, Book, MapPin, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getLabel, getValueLabel } from "@/lib/censo-dict";
 import { RawDataSection } from "./CensoDashboard";
@@ -233,42 +233,64 @@ export default function GenericCensoDashboard({
               className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl relative overflow-hidden flex flex-col"
             >
               {/* Header */}
-              <div className={`p-6 text-white flex justify-between items-start bg-gradient-to-r ${
-                color === "blue"   ? "from-blue-700 to-blue-500" :
-                color === "purple" ? "from-purple-700 to-purple-500" :
-                color === "teal"   ? "from-teal-700 to-teal-500" :
-                "from-rose-700 to-rose-500"
+              <div className={`p-8 text-white relative overflow-hidden bg-gradient-to-br ${
+                color === "blue"   ? "from-blue-700 via-blue-600 to-blue-500" :
+                color === "purple" ? "from-purple-700 via-purple-600 to-purple-500" :
+                color === "teal"   ? "from-teal-700 via-teal-600 to-teal-500" :
+                "from-rose-700 via-rose-600 to-rose-500"
               }`}>
-                <div>
-                  <h2 className="text-xl font-bold leading-tight">{String(selected.UNIDADE)}</h2>
-                  <p className="text-white/70 text-xs mt-1">
-                    {String(selected.MUNICIPIO)} · INEP: {String(selected.CO_ENTIDADE)} · {REDE[Number(selected.TP_DEPENDENCIA) ?? 0]} · {LOCAL[Number(selected.TP_LOCALIZACAO) ?? 0]}
-                  </p>
-                  {!!selected.NO_AREA_CURSO_PROFISSIONAL && (
-                    <p className="text-white/80 text-sm mt-1 font-medium">
-                      {String(selected.NO_AREA_CURSO_PROFISSIONAL)} — {String(selected.NO_CURSO_EDUC_PROFISSIONAL)}
-                    </p>
-                  )}
+                {/* Decorative background icon */}
+                <div className="absolute -right-10 -bottom-10 opacity-10 rotate-12 scale-[3]">
+                   {color === "blue" ? <Users size={120} /> : color === "purple" ? <GraduationCap size={120} /> : color === "teal" ? <Layout size={120} /> : <Book size={120} />}
                 </div>
-                <button onClick={() => setSelected(null)} className="p-2 hover:bg-white/10 rounded-full ml-4 flex-shrink-0">
-                  <X size={20} />
-                </button>
+
+                <div className="relative z-10 flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tight leading-none drop-shadow-sm">{String(selected.UNIDADE)}</h2>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-white/80 text-xs font-semibold uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5"><MapPin size={14} /> {String(selected.MUNICIPIO)}</span>
+                      <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                      <span>INEP: {String(selected.CO_ENTIDADE)}</span>
+                      <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                      <span>{REDE[Number(selected.TP_DEPENDENCIA) ?? 0]}</span>
+                    </div>
+                    {!!selected.NO_AREA_CURSO_PROFISSIONAL && (
+                      <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg border border-white/10 text-sm font-medium">
+                        <Award size={16} className="text-white/60" />
+                        {String(selected.NO_AREA_CURSO_PROFISSIONAL)} — {String(selected.NO_CURSO_EDUC_PROFISSIONAL)}
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => setSelected(null)} 
+                    className="p-2.5 bg-white/10 hover:bg-white/20 rounded-2xl backdrop-blur-md transition-all border border-white/10 group"
+                  >
+                    <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                  </button>
+                </div>
               </div>
 
-              {/* Summary badges */}
-              <div className="p-4 border-b border-gray-100 flex flex-wrap gap-2 bg-gray-50/50">
-                {tableFields.map(tf => (
-                  <span key={tf.key} className={`px-3 py-1 rounded-full text-xs font-semibold ${c.badge}`}>
-                    {tf.label}: {Number(selected[tf.key] ?? 0).toLocaleString("pt-BR")}
-                  </span>
-                ))}
+              {/* Summary KPI Cards */}
+              <div className="p-6 bg-gray-50/50 border-b border-gray-100">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {tableFields.map(tf => (
+                    <div key={tf.key} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{tf.label}</div>
+                      <div className={`text-xl font-black ${c.accent.split(" ")[0]}`}>
+                        {Number(selected[tf.key] ?? 0).toLocaleString("pt-BR")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Raw data with dictionary */}
-              <div className="flex-grow overflow-y-auto p-6">
+              <div className="flex-grow overflow-y-auto p-8 bg-white">
                 <RawDataSection
                   data={selected}
-                  accentColor={color === "blue" || color === "teal" ? "indigo" : color === "purple" ? "indigo" : "indigo"}
+                  rawSearch={search}
+                  setRawSearch={setSearch}
+                  accentColor={color}
                 />
               </div>
             </motion.div>

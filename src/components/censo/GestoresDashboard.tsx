@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import {
   Search, Users, UserCheck, GraduationCap,
   Briefcase, Award, ChevronDown, ChevronUp, X,
-  UserCircle, BookOpen, BarChart2
+  UserCircle, BookOpen, BarChart2, MapPin
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RawDataSection } from "./CensoDashboard";
@@ -266,26 +266,54 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
               className="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl relative overflow-hidden flex flex-col"
             >
               {/* Header */}
-              <div className="p-6 bg-gradient-to-r from-indigo-700 to-indigo-500 text-white flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl font-bold leading-tight">{selectedGestor.UNIDADE}</h2>
-                  <p className="text-indigo-200 text-xs mt-1">INEP: {selectedGestor.CO_ENTIDADE} · Censo {selectedGestor.NU_ANO_CENSO}</p>
+              <div className="p-8 bg-gradient-to-br from-indigo-700 via-indigo-600 to-indigo-500 text-white relative overflow-hidden">
+                {/* Decorative background icon */}
+                <div className="absolute -right-10 -bottom-10 opacity-10 rotate-12 scale-[3]">
+                   <Users size={120} />
                 </div>
-                <button onClick={() => setSelectedGestor(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors ml-4 flex-shrink-0">
-                  <X size={20} />
-                </button>
+
+                <div className="relative z-10 flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tight leading-none drop-shadow-sm">{selectedGestor.UNIDADE}</h2>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-white/80 text-xs font-semibold uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5"><MapPin size={14} /> Tocantins</span>
+                      <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                      <span>INEP: {selectedGestor.CO_ENTIDADE}</span>
+                      <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                      <span>Censo {selectedGestor.NU_ANO_CENSO}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedGestor(null)} 
+                    className="p-2.5 bg-white/10 hover:bg-white/20 rounded-2xl backdrop-blur-md transition-all border border-white/10 group"
+                  >
+                    <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-gray-50/40">
-                {/* Summary badges */}
-                <div className="flex flex-wrap gap-2">
-                  <Badge color="indigo">{selectedGestor.QT_GEST_BAS} Gestor(es)</Badge>
-                  <Badge color="pink">{selectedGestor.QT_GEST_BAS_FEM} Feminino</Badge>
-                  <Badge color="sky">{selectedGestor.QT_GEST_BAS_MASC} Masculino</Badge>
-                  {selectedGestor.QT_GEST_BAS_PCD > 0 && <Badge color="orange">{selectedGestor.QT_GEST_BAS_PCD} PcD</Badge>}
+              <div className="flex-grow overflow-y-auto p-8 space-y-8 bg-white">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/50">
+                    <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Total Gestores</div>
+                    <div className="text-2xl font-black text-indigo-700">{selectedGestor.QT_GEST_BAS}</div>
+                  </div>
+                  <div className="bg-pink-50/50 p-4 rounded-2xl border border-pink-100/50">
+                    <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest mb-1">Feminino</div>
+                    <div className="text-2xl font-black text-pink-700">{selectedGestor.QT_GEST_BAS_FEM}</div>
+                  </div>
+                  <div className="bg-sky-50/50 p-4 rounded-2xl border-sky-100/50 border">
+                    <div className="text-[10px] font-bold text-sky-400 uppercase tracking-widest mb-1">Masculino</div>
+                    <div className="text-2xl font-black text-sky-700">{selectedGestor.QT_GEST_BAS_MASC}</div>
+                  </div>
+                  <div className="bg-orange-50/50 p-4 rounded-2xl border-orange-100/50 border">
+                    <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-1">Pessoas PcD</div>
+                    <div className="text-2xl font-black text-orange-700">{selectedGestor.QT_GEST_BAS_PCD}</div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                   <ModalSection title="Raça / Cor">
                     <ModalRow label="Branca" value={selectedGestor.QT_GEST_BAS_BRANCA} />
                     <ModalRow label="Preta" value={selectedGestor.QT_GEST_BAS_PRETA} />
@@ -321,27 +349,11 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
                     <ModalRow label="Concurso" value={selectedGestor.QT_GEST_BAS_ACESSO_CARGO_CONC} />
                     <ModalRow label="Própria (prop)" value={selectedGestor.QT_GEST_BAS_ACESSO_CARGO_PROP} />
                   </ModalSection>
-
-                  <ModalSection title="Vínculo Empregatício">
-                    <ModalRow label="Concursado" value={selectedGestor.QT_GEST_BAS_VINCULO_CONCUR} />
-                    <ModalRow label="Contratado" value={selectedGestor.QT_GEST_BAS_VINCULO_CONTRA} />
-                    <ModalRow label="Terceirizado" value={selectedGestor.QT_GEST_BAS_VINCULO_TERCEIR} />
-                    <ModalRow label="CLT" value={selectedGestor.QT_GEST_BAS_VINCULO_CLT} />
-                  </ModalSection>
-
-                  <ModalSection title="Formação Específica">
-                    <ModalRow label="Gestão Escolar" value={selectedGestor.QT_GEST_BAS_ESPEC_GESTAO} />
-                    <ModalRow label="TIC / Educação Digital" value={selectedGestor.QT_GEST_BAS_ESPEC_EDUC_TIC} />
-                    <ModalRow label="Ens. Médio" value={selectedGestor.QT_GEST_BAS_ESPEC_ENS_MEDIO} />
-                    <ModalRow label="EJA" value={selectedGestor.QT_GEST_BAS_ESPEC_EJA} />
-                    <ModalRow label="Educação Especial" value={selectedGestor.QT_GEST_BAS_ESPEC_ED_ESPECIAL} />
-                    <ModalRow label="Nenhuma" value={selectedGestor.QT_GEST_BAS_ESPEC_NENHUM} />
-                  </ModalSection>
                 </div>
 
                 {/* ── Dados Brutos com Dicionário ── */}
-                <div className="mt-2">
-                  <RawDataSection data={selectedGestor} accentColor="indigo" />
+                <div className="pt-8 border-t border-gray-100">
+                  <RawDataSection data={selectedGestor} rawSearch={searchTerm} setRawSearch={setSearchTerm} accentColor="indigo" />
                 </div>
               </div>
             </motion.div>
