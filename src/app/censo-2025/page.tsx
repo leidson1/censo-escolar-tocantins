@@ -8,11 +8,13 @@ export const metadata = {
 
 import schools from "@/data/escolas-resumo.json";
 import stats from "@/data/censo-stats.json";
-import gestores from "@/data/gestores_escolares_2025_TO.json";
-import docentes from "@/data/docentes_2025_TO.json";
-import matriculas from "@/data/matriculas_2025_TO.json";
-import turmas from "@/data/turmas_2025_TO.json";
-import cursosTecnicos from "@/data/cursos_tecnicos_2025_TO.json";
+
+// Dados desativados para reduzir o tamanho da aplicação
+const gestores: any[] = [];
+const docentes: any[] = [];
+const matriculas: any[] = [];
+const turmas: any[] = [];
+const cursosTecnicos: any[] = [];
 
 export default async function Censo2025Page() {
 

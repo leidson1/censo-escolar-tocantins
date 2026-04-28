@@ -1,8 +1,10 @@
 "use server";
 
 
-import gestoresData from '@/data/gestores_escolares_2025_TO.json';
 import escolasFixData from '@/data/escolas-fix.json';
+
+// Dados desativados
+const gestoresData: any[] = [];
 
 export async function getSchoolDetails(schoolId: number) {
   try {
