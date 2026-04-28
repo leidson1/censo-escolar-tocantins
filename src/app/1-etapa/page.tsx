@@ -81,7 +81,7 @@ export default function PrimeiraEtapa() {
                         <div>
                             <h2 className="text-2xl font-bold mb-3">Atualizações Censo 2025 (TDAH e Transtornos)</h2>
                             <p className="text-green-50 text-justify leading-relaxed">
-                                A partir de 2025, o registro de alunos com <strong>TDAH, Dislexia, Discalculia e Disgrafia</strong> deve ser feito no novo campo <strong>'Aluno(a) com transtorno que impacta o desenvolvimento da aprendizagem'</strong>.
+                                A partir de 2025, o registro de alunos com <strong>TDAH, Dislexia, Discalculia e Disgrafia</strong> deve ser feito no novo campo <strong>&apos;Aluno(a) com transtorno que impacta o desenvolvimento da aprendizagem&apos;</strong>.
                                 Estes transtornos **não devem** ser marcados como deficiência, seguindo o novo Glossário da Educação Especial do Inep.
                             </p>
                         </div>
