@@ -50,7 +50,7 @@ interface Gestor {
   QT_GEST_BAS_ESPEC_GESTAO: number;
   QT_GEST_BAS_ESPEC_EDUC_TIC: number;
   QT_GEST_BAS_ESPEC_NENHUM: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface GestoresDashboardProps {
@@ -354,7 +354,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
 
 // ── Sub-components ────────────────────────────────────────────────────
 
-function KpiCard({ title, value, icon, color }: { title: string; value: string | number; icon: any; color: string }) {
+function KpiCard({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode; color: string }) {
   return (
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
       <div className={`p-3 rounded-xl ${color}`}>{icon}</div>
@@ -382,7 +382,7 @@ function MiniBar({ label, value, total, color }: { label: string; value: number;
 }
 
 function SortTh({ label, field, current, dir, onSort }: {
-  label: string; field: any; current: any; dir: "asc" | "desc"; onSort: (f: any) => void;
+  label: string; field: keyof Gestor; current: keyof Gestor; dir: "asc" | "desc"; onSort: (f: keyof Gestor) => void;
 }) {
   const active = current === field;
   return (
@@ -398,7 +398,7 @@ function SortTh({ label, field, current, dir, onSort }: {
   );
 }
 
-function ModalSection({ title, children }: { title: string; children: any }) {
+function ModalSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
       <h3 className="font-bold text-gray-700 border-l-4 border-indigo-500 pl-3 text-xs uppercase tracking-wider mb-3">{title}</h3>
@@ -416,7 +416,7 @@ function ModalRow({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Badge({ color, children }: { color: string; children: any }) {
+function Badge({ color, children }: { color: string; children: React.ReactNode }) {
   const colors: Record<string, string> = {
     indigo: "bg-indigo-100 text-indigo-700",
     pink: "bg-pink-100 text-pink-700",

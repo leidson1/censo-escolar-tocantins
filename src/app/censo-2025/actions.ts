@@ -8,7 +8,7 @@ export async function getSchoolDetails(schoolId: number) {
   try {
     const fileContent = fs.readFileSync(filePath, 'utf8');
     const data = JSON.parse(fileContent);
-    return data.find((s: any) => s.CO_ENTIDADE === schoolId) || null;
+    return data.find((s: Record<string, unknown>) => s.CO_ENTIDADE === schoolId) || null;
   } catch (error) {
     console.error('Error fetching school details:', error);
     return null;

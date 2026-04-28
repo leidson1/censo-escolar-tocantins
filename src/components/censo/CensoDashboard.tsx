@@ -46,7 +46,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
   const [searchTerm, setSearchTerm] = useState("");
   const [municipioFilter, setMunicipioFilter] = useState("Todos");
   const [redeFilter, setRedeFilter] = useState("Todas");
-  const [selectedSchool, setSelectedSchool] = useState<any>(null);
+  const [selectedSchool, setSelectedSchool] = useState<Record<string, unknown> | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [rawSearch, setRawSearch] = useState("");
 
@@ -328,7 +328,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
 
 // ── Shared Raw Data Section ────────────────────────────────────────────
 
-export function RawDataSection({ data, accentColor = "green" }: { data: Record<string, any>; accentColor?: "green" | "indigo" }) {
+export function RawDataSection({ data, accentColor = "green" }: { data: Record<string, unknown>; accentColor?: "green" | "indigo" }) {
   const [rawSearch, setRawSearch] = useState("");
   const [showOnlyNonZero, setShowOnlyNonZero] = useState(false);
 
@@ -431,7 +431,7 @@ export function RawDataSection({ data, accentColor = "green" }: { data: Record<s
 
 // ── Sub-components ─────────────────────────────────────────────────────
 
-function StatCard({ title, value, icon, color }: { title: string, value: string | number, icon: any, color: string }) {
+function StatCard({ title, value, icon, color }: { title: string, value: string | number, icon: React.ReactNode, color: string }) {
   return (
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
       <div className={`p-3 rounded-xl ${color}`}>
@@ -445,7 +445,7 @@ function StatCard({ title, value, icon, color }: { title: string, value: string 
   );
 }
 
-function DetailSection({ title, children, className }: { title: string, children: any, className?: string }) {
+function DetailSection({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) {
   return (
     <div className={`space-y-3 ${className}`}>
       <h3 className="font-bold text-gray-800 border-l-4 border-green-500 pl-3 uppercase text-xs tracking-wider">{title}</h3>

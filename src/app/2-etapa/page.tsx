@@ -168,7 +168,7 @@ export default function SegundaEtapa() {
                     <ul className="list-disc pl-6">
                         <li><strong>Dependência Escolar:</strong> Para alunos em regime de Progressão Parcial/Dependência, a opção a ser informada é <strong>“Aprovado”</strong>. No caso de séries/anos finais, marque também a opção <strong>“Não concluinte”</strong>.</li>
                         <li><strong>Novo Ensino Médio:</strong> É possível declarar simultaneamente a Formação Geral Básica e os Itinerários Formativos. </li>
-                        <li><strong>Ensino Médio Técnico:</strong> Utilize a nova classificação "Ensino médio articulado ao itinerário formativo técnico profissional" para cursos técnicos integrados.</li>
+                        <li><strong>Ensino Médio Técnico:</strong> Utilize a nova classificação &quot;Ensino médio articulado ao itinerário formativo técnico profissional&quot; para cursos técnicos integrados.</li>
                     </ul>
 
                     <hr className="my-6 border-t border-gray-200" />
@@ -287,7 +287,7 @@ export default function SegundaEtapa() {
                     <h2 className="text-[#0D6E3F] font-bold text-2xl mt-0 pb-1 border-b border-dashed border-gray-300">6. Dúvidas e Contatos</h2>
                     <p className="mt-4 mb-6">Em caso de dúvidas sobre o preenchimento, entre em contato com o(a) técnico censitário da sua Superintendência Regional de Educação:</p>
 
-                    <h3 className="font-bold text-lg mb-4">Contatos da SRE's (Tocantins)</h3>
+                    <h3 className="font-bold text-lg mb-4">Contatos da SRE&apos;s (Tocantins)</h3>
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-sm md:text-base">
@@ -296,7 +296,7 @@ export default function SegundaEtapa() {
                                     <th className="p-3 border border-gray-200 font-semibold w-[15%]">Regional</th>
                                     <th className="p-3 border border-gray-200 font-semibold w-[30%]">E-mail (Diretoria)</th>
                                     <th className="p-3 border border-gray-200 font-semibold w-[30%]">E-mail (Censo Escolar)</th>
-                                    <th className="p-3 border border-gray-200 font-semibold w-[25%]">Telefone SRE's</th>
+                                    <th className="p-3 border border-gray-200 font-semibold w-[25%]">Telefone SRE&apos;s</th>
                                 </tr>
                             </thead>
                             <tbody>

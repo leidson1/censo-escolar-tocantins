@@ -10,16 +10,16 @@ import GenericCensoDashboard from "./GenericCensoDashboard";
 type Dataset = "escolas" | "gestores" | "docentes" | "matriculas" | "turmas" | "cursos";
 
 interface DatasetSelectorProps {
-  schools: any[];
-  stats: any;
-  gestores: any[];
-  docentes: any[];
-  matriculas: any[];
-  turmas: any[];
-  cursosTecnicos: any[];
+  schools: unknown[];
+  stats: Record<string, unknown>;
+  gestores: unknown[];
+  docentes: unknown[];
+  matriculas: unknown[];
+  turmas: unknown[];
+  cursosTecnicos: unknown[];
 }
 
-const tabs: { id: Dataset; label: string; icon: any; desc: string; color: string; active: string }[] = [
+const tabs: { id: Dataset; label: string; icon: React.ElementType; desc: string; color: string; active: string }[] = [
   {
     id: "escolas",
     label: "Escolas",
