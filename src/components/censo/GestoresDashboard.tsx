@@ -382,7 +382,7 @@ function MiniBar({ label, value, total, color }: { label: string; value: number;
 }
 
 function SortTh({ label, field, current, dir, onSort }: {
-  label: string; field: string; current: string; dir: "asc" | "desc"; onSort: (f: any) => void;
+  label: string; field: any; current: any; dir: "asc" | "desc"; onSort: (f: any) => void;
 }) {
   const active = current === field;
   return (

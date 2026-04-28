@@ -280,7 +280,7 @@ export default function GenericCensoDashboard({
 }
 
 function SortTh({ label, field, current, dir, onSort }: {
-  label: string; field: string; current: string; dir: "asc" | "desc"; onSort: (f: string) => void;
+  label: string; field: any; current: any; dir: "asc" | "desc"; onSort: (f: any) => void;
 }) {
   const active = current === field;
   return (
