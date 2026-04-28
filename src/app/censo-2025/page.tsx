@@ -1,6 +1,4 @@
 import MainLayout from "@/components/layout/MainLayout";
-import fs from 'fs';
-import path from 'path';
 import DatasetSelector from "@/components/censo/DatasetSelector";
 
 export const metadata = {
@@ -8,26 +6,15 @@ export const metadata = {
   description: "Dados completos das escolas, gestores, docentes, matrículas, turmas e cursos técnicos do Tocantins no Censo Escolar 2025.",
 };
 
-function readJson(file: string) {
-  const filePath = path.join(process.cwd(), 'src', 'data', file);
-  try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch (e) {
-    console.error(`Error reading ${file}:`, e);
-    return [];
-  }
-}
+import schools from "@/data/escolas-resumo.json";
+import stats from "@/data/censo-stats.json";
+import gestores from "@/data/gestores_escolares_2025_TO.json";
+import docentes from "@/data/docentes_2025_TO.json";
+import matriculas from "@/data/matriculas_2025_TO.json";
+import turmas from "@/data/turmas_2025_TO.json";
+import cursosTecnicos from "@/data/cursos_tecnicos_2025_TO.json";
 
 export default async function Censo2025Page() {
-  const [schools, stats, gestores, docentes, matriculas, turmas, cursosTecnicos] = await Promise.all([
-    Promise.resolve(readJson('escolas-resumo.json')),
-    Promise.resolve(readJson('censo-stats.json')),
-    Promise.resolve(readJson('gestores_escolares_2025_TO.json')),
-    Promise.resolve(readJson('docentes_2025_TO.json')),
-    Promise.resolve(readJson('matriculas_2025_TO.json')),
-    Promise.resolve(readJson('turmas_2025_TO.json')),
-    Promise.resolve(readJson('cursos_tecnicos_2025_TO.json')),
-  ]);
 
   return (
     <MainLayout title="Dados do Censo Escolar 2025">

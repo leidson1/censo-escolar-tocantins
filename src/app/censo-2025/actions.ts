@@ -1,14 +1,12 @@
 "use server";
 
-import fs from 'fs';
-import path from 'path';
+
+import gestoresData from '@/data/gestores_escolares_2025_TO.json';
+import escolasFixData from '@/data/escolas-fix.json';
 
 export async function getSchoolDetails(schoolId: number) {
-  const filePath = path.join(process.cwd(), 'src', 'data', 'escolas-fix.json');
   try {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const data = JSON.parse(fileContent);
-    return data.find((s: Record<string, unknown>) => s.CO_ENTIDADE === schoolId) || null;
+    return (escolasFixData as any[]).find((s: any) => s.CO_ENTIDADE === schoolId) || null;
   } catch (error) {
     console.error('Error fetching school details:', error);
     return null;
@@ -16,12 +14,5 @@ export async function getSchoolDetails(schoolId: number) {
 }
 
 export async function getGestoresData() {
-  const filePath = path.join(process.cwd(), 'src', 'data', 'gestores_escolares_2025_TO.json');
-  try {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('Error fetching gestores data:', error);
-    return [];
-  }
+  return gestoresData;
 }
