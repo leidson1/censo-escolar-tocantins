@@ -1,6 +1,36 @@
 /**
  * Map Supabase column names to the legacy JSON names used in the UI
  */
+export const mapGenericData = (row: any) => {
+  if (!row) return null;
+  return {
+    ...row,
+    CO_ENTIDADE: Number(row.codigo_da_escola || row.co_entidade),
+    NO_ENTIDADE: row.unidade || row.nome_da_escola,
+    UNIDADE: row.unidade || row.nome_da_escola, // GestoresDashboard uses UNIDADE
+    NO_MUNICIPIO: row.municipio,
+    // Docentes
+    QT_DOC_BAS: row.numero_de_docentes_da_educacao_basica,
+    QT_DOC_FUND: row.numero_de_docentes_do_ensino_fundamental,
+    QT_DOC_MED: row.numero_de_docentes_do_ensino_medio_regular,
+    // Matrículas
+    QT_MAT_BAS: row.numero_de_matriculas_da_educacao_basica,
+    QT_MAT_FUND: row.numero_de_matriculas_do_ensino_fundamental,
+    QT_MAT_MED: row.numero_de_matriculas_do_ensino_medio_regular,
+    // Turmas
+    QT_TUR_BAS: row.numero_de_turmas_da_educacao_basica,
+    QT_TUR_FUND: row.numero_de_turmas_do_ensino_fundamental,
+    QT_TUR_MED: row.numero_de_turmas_do_ensino_medio_regular,
+    // Gestores
+    QT_GEST_BAS: row.numero_de_gestores_escolares_da_educacao_basica,
+    // Cursos Técnicos
+    QT_CURSO_TEC: row.numero_de_cursos_tecnicos,
+    QT_MAT_CURSO_TEC: row.numero_de_matriculas_em_cursos_tecnicos,
+    NO_CURSO_EDUC_PROFISSIONAL: row.nome_do_cursos_tecnico,
+    NO_AREA_CURSO_PROFISSIONAL: row.nome_da_area_do_curso_tecnico,
+  };
+};
+
 export const mapSchoolData = (supabaseRow: any) => {
   if (!supabaseRow) return null;
 
