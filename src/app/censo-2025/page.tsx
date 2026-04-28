@@ -6,10 +6,11 @@ export const metadata = {
   description: "Dados completos das escolas, gestores, docentes, matrículas, turmas e cursos técnicos do Tocantins no Censo Escolar 2025.",
 };
 
-import schools from "@/data/escolas-resumo.json";
+import { supabase } from "@/lib/supabase";
+import { mapSchoolSummary } from "@/lib/supabase-mapping";
 import stats from "@/data/censo-stats.json";
 
-// Dados desativados para reduzir o tamanho da aplicação
+// Dados desativados por enquanto
 const gestores: any[] = [];
 const docentes: any[] = [];
 const matriculas: any[] = [];
@@ -17,6 +18,11 @@ const turmas: any[] = [];
 const cursosTecnicos: any[] = [];
 
 export default async function Censo2025Page() {
+  const { data: schoolsRaw, error } = await supabase
+    .from('escolas_2025_to')
+    .select('codigo_da_escola, nome_da_escola, nome_do_municipio, dependencia_administrativa, localizacao, acesso_a_internet, numero_de_salas_de_aula_utilizadas_na_escola_dentro_e_fora_do_p');
+
+  const schools = (schoolsRaw || []).map(mapSchoolSummary);
 
   return (
     <MainLayout title="Dados do Censo Escolar 2025">
