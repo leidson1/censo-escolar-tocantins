@@ -23,10 +23,18 @@ export function getLabel(key: string): string {
  */
 export function getValueLabel(key: string, value: unknown): string {
   const entry = dictMap[key];
+  
+  // Specific category mapping from dictionary
   if (entry?.categoria && value !== null && value !== undefined) {
     const strVal = String(value);
     return entry.categoria[strVal] ?? String(value);
   }
+
+  // Handle binary/null flags (1 = Sim, 0 = Não, null = Não Respondeu)
+  if (value === 1 || value === "1") return "Sim";
+  if (value === 0 || value === "0") return "Não";
+  if (value === null || value === undefined || value === "") return "Não Respondeu";
+
   if (typeof value === "boolean") return value ? "Sim" : "Não";
   return String(value ?? "");
 }
