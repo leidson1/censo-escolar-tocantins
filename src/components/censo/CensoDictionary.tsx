@@ -112,12 +112,7 @@ export default function CensoDictionary() {
               </div>
 
               {/* Tabs */}
-              <div className="flex overflow-x-auto p-3 bg-gray-50 border-b border-gray-100 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                <style jsx>{`
-                  .scrollbar-hide::-webkit-scrollbar {
-                    display: none;
-                  }
-                `}</style>
+              <div className="flex overflow-x-auto p-3 bg-gray-50 border-b border-gray-100 scrollbar-hide">
                 <div className="flex gap-2">
                   {tables.map(table => (
                     <button
@@ -175,9 +170,9 @@ export default function CensoDictionary() {
                     )}
                     
                     {/* Categoria rendering if exists */}
-                    {item.categoria && (
+                    {item.categoria && typeof item.categoria === 'object' && !Array.isArray(item.categoria) && (
                       <div className="mt-3 pt-3 border-t border-gray-50 grid grid-cols-2 gap-2">
-                        {typeof item.categoria === 'object' && Object.entries(item.categoria).map(([k, v]) => (
+                        {Object.entries(item.categoria).map(([k, v]) => (
                           <div key={k} className="flex items-center gap-2 text-[10px]">
                             <span className="font-bold text-gray-400">{k}:</span>
                             <span className="text-gray-600 truncate">{String(v)}</span>
