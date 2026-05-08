@@ -9,7 +9,7 @@ interface DictionaryItem {
   tabela: string;
   nome_variavel: string;
   descricao: string;
-  categoria: any;
+  categoria: Record<string, string | number> | null;
   notas: string | null;
 }
 

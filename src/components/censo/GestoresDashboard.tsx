@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import {
   Search, Users, UserCheck, GraduationCap,
   Briefcase, Award, ChevronDown, ChevronUp, X,
-  UserCircle, BookOpen, BarChart2, MapPin, HelpCircle
+  UserCircle, BookOpen, BarChart2, MapPin, HelpCircle,
+  UserPlus, Filter, School, Monitor
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RawDataSection } from "./CensoDashboard";
@@ -70,7 +71,7 @@ interface Gestor {
   QT_GEST_BAS_ESPEC_GESTAO: number;
   QT_GEST_BAS_ESPEC_EDUC_TIC: number;
   QT_GEST_BAS_ESPEC_NENHUM: number;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface GestoresDashboardProps {

@@ -5,7 +5,6 @@ import {
   Users, GraduationCap, BookOpen, Search, Filter, 
   MapPin, School, HelpCircle, Award, Book,
   ChevronDown, ChevronUp, UserCircle, X,
-  Briefcase,
   Monitor
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,7 +25,7 @@ interface DocenteRecord {
   QT_DOC_BAS_ESCO_SUP_POS_MESTRA: number;
   QT_DOC_BAS_ESCO_SUP_POS_DOUTO: number;
   QT_DOC_BAS_ESCO_SUP_POS_NENHUM: number;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface DocentesDashboardProps {
@@ -432,7 +431,7 @@ function PosGradCard({ label, value, total, color, tooltip }: { label: string; v
 
 function ModalCard({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-  const colors: any = {
+  const colors: Record<string, string> = {
     purple: "bg-purple-600",
     indigo: "bg-indigo-600",
     blue: "bg-blue-600",

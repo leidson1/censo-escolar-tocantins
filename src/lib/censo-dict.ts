@@ -13,7 +13,7 @@ const dictMap = dictMapRaw as Record<string, DictEntry>;
 
 /** Normaliza a chave para bater com o dicionário (Case insensitive e tratamento de underscores) */
 function normalizeKey(key: string): string {
-  let normalized = key.toUpperCase();
+  const normalized = key.toUpperCase();
   // Mapeamentos específicos para campos comuns nos dashboards que usam nomes amigáveis no banco
   const aliases: Record<string, string> = {
     "CODIGO_DA_ESCOLA": "CO_ENTIDADE",
