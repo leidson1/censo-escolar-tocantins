@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, MapPin, School, Wifi, WifiOff, Info, Filter, ArrowUpDown, ExternalLink, Database, HelpCircle, Layout, UserCircle } from "lucide-react";
+import { Search, MapPin, School, Wifi, WifiOff, Info, Filter, ArrowUpDown, ExternalLink, Database, HelpCircle, UserCircle, X, Monitor } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSchoolDetails } from "@/app/censo-2025/actions";
 import { getLabel, getValueLabel, getDictEntry } from "@/lib/censo-dict";
@@ -65,7 +65,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
   const [localFilter, setLocalFilter] = useState("Todas");
   const [localDifFilter, setLocalDifFilter] = useState("Todas");
   const [situacaoFilter, setSituacaoFilter] = useState("Todas");
-  const [selectedSchool, setSelectedSchool] = useState<any | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState<Record<string, string | number | boolean | null | undefined> | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [rawSearch, setRawSearch] = useState("");
 
@@ -102,7 +102,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
     setIsLoadingDetails(true);
     setRawSearch("");
     const details = await getSchoolDetails(id);
-    setSelectedSchool(details);
+    setSelectedSchool(details as Record<string, string | number | boolean | null | undefined>);
     setIsLoadingDetails(false);
   };
 
@@ -243,7 +243,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-500 text-white rounded-xl shadow-lg shadow-purple-100 group-hover:scale-110 transition-transform">
-              <Layout size={20} />
+              <Monitor size={20} />
             </div>
             <div>
               <div className="text-[10px] font-bold text-purple-400 uppercase tracking-[0.1em]">Total de Salas</div>
@@ -378,12 +378,11 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   </p>
                 </div>
                 <button onClick={() => setSelectedSchool(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                  <ExternalLink size={20} />
+                  <X size={20} />
                 </button>
               </div>
 
               <div className="flex-grow overflow-y-auto p-6 bg-gray-50/30">
-                {/* Structured sections */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <DetailSection title="Infraestrutura Básica">
                     <DetailItem label="Água Potável" value={getValueLabel("IN_AGUA_POTAVEL", selectedSchool.IN_AGUA_POTAVEL)} state={selectedSchool.IN_AGUA_POTAVEL} />
@@ -401,9 +400,8 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   </DetailSection>
                 </div>
 
-                {/* Raw Data with Dictionary */}
                 <RawDataSection 
-                  data={selectedSchool} 
+                  data={selectedSchool as Record<string, unknown>} 
                   rawSearch={rawSearch} 
                   setRawSearch={setRawSearch} 
                   accentColor="indigo" 
@@ -415,7 +413,6 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   ]}
                 />
 
-                {/* Address */}
                 <div className="mt-6 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
                   <h4 className="text-xs font-bold text-[#0D6E3F] uppercase tracking-widest mb-3 flex items-center gap-2">
                     <MapPin size={14} /> Localização e Endereço Oficial
@@ -435,8 +432,6 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
   );
 }
 
-// ── Shared Raw Data Section ────────────────────────────────────────────
-
 const PREFIX_LABELS: Record<string, string> = {
   "IN_": "Infraestrutura e Recursos",
   "QT_": "Quantitativos e Totais",
@@ -454,7 +449,7 @@ export function RawDataSection({
   accentColor = "blue",
   excludeKeys = [] 
 }: { 
-  data: any, 
+  data: Record<string, unknown>, 
   rawSearch: string, 
   setRawSearch: (v: string) => void, 
   accentColor?: string,
@@ -483,7 +478,7 @@ export function RawDataSection({
   }, [data, rawSearch, showOnlyNonZero, excludeKeys]);
 
   const groupedEntries = useMemo(() => {
-    const groups: Record<string, [string, any][]> = {};
+    const groups: Record<string, [string, unknown][]> = {};
     entries.forEach(([key, value]) => {
       const prefix = key.substring(0, 3).toUpperCase();
       const cat = PREFIX_LABELS[prefix] || "Outras Informações";
@@ -549,11 +544,10 @@ export function RawDataSection({
               <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[8px] font-bold">{items.length}</span>
             </h3>
             <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-              {items.map(([key, value], idx) => {
+              {items.map(([key, value]) => {
                 const entry = getDictEntry(key.toUpperCase());
                 let label = entry?.descricao || key;
                 
-                // If no label was found, format the key nicely
                 if (label === key) {
                   label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
                 }
@@ -583,7 +577,7 @@ export function RawDataSection({
                       </div>
                       {(displayVal !== String(value)) && (
                         <div className="text-[8px] text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
-                          {value}
+                          {String(value)}
                         </div>
                       )}
                     </div>
@@ -614,8 +608,6 @@ export function RawDataSection({
   );
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────
-
 function StatCard({ title, value, icon, color }: { title: string, value: string | number, icon: React.ReactNode, color: string }) {
   return (
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -639,7 +631,7 @@ function DetailSection({ title, children, className }: { title: string, children
   );
 }
 
-function DetailItem({ label, value, state }: { label: string, value: string | number, state?: any }) {
+function DetailItem({ label, value, state }: { label: string, value: string | number, state?: unknown }) {
   const isYes = state === 1 || state === "1";
   const isNo = state === 0 || state === "0";
   const isNull = state === null || state === undefined || state === "";

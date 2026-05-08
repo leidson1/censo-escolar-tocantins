@@ -8,15 +8,14 @@ export const metadata = {
 
 import { supabase } from "@/lib/supabase";
 import { mapSchoolSummary, mapGenericData } from "@/lib/supabase-mapping";
-import stats from "@/data/censo-stats.json";
 import CensoDictionary from "@/components/censo/CensoDictionary";
 
 import { fetchAllRows } from "@/lib/supabase-utils";
+export const dynamic = 'force-dynamic';
 
 export default async function Censo2025Page() {
   // Fetch all data using the fetchAllRows utility to bypass the 1000 row limit automatically
   const schoolFields = 'codigo_da_escola, nome_da_escola, nome_do_municipio, dependencia_administrativa, localizacao, localizacao_diferenciada_da_escola, situacao_de_funcionamento, acesso_a_internet, numero_de_salas_de_aula_utilizadas_na_escola_dentro_e_fora_do_p';
-  const genericFields = 'codigo_da_escola, unidade, municipio, numero_de_docentes_da_educacao_basica, numero_de_docentes_do_ensino_fundamental, numero_de_docentes_do_ensino_medio_regular, numero_de_matriculas_da_educacao_basica, numero_de_matriculas_do_ensino_fundamental, numero_de_matriculas_do_ensino_medio_regular, numero_de_turmas_da_educacao_basica, numero_de_turmas_do_ensino_fundamental, numero_de_turmas_do_ensino_medio_regular';
 
   const [
     schoolsRaw,

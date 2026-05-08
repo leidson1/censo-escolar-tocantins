@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import {
   Search, Users, UserCheck, GraduationCap,
   Briefcase, Award, ChevronDown, ChevronUp, X,
-  UserCircle, BookOpen, BarChart2, MapPin, HelpCircle
+  UserCircle, BookOpen, BarChart2, MapPin, HelpCircle,
+  UserPlus, Filter, School, Monitor
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RawDataSection } from "./CensoDashboard";
@@ -70,7 +71,13 @@ interface Gestor {
   QT_GEST_BAS_ESPEC_GESTAO: number;
   QT_GEST_BAS_ESPEC_EDUC_TIC: number;
   QT_GEST_BAS_ESPEC_NENHUM: number;
-  [key: string]: any;
+  QT_GEST_BAS_ACESSO_CARGO_P_SEL: number;
+  QT_GEST_BAS_ACESSO_CARGO_OUTRO: number;
+  rede: number;
+  local: number;
+  localDif: number;
+  NO_MUNICIPIO: string;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface GestoresDashboardProps {
@@ -116,7 +123,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
         matchAcesso = g.QT_GEST_BAS > 0 && sum === 0;
       } else if (acessoFilter !== "all") {
         const key = `QT_GEST_BAS_ACESSO_CARGO_${acessoFilter.toUpperCase()}`;
-        matchAcesso = (g[key] || 0) > 0;
+        matchAcesso = (Number(g[key]) || 0) > 0;
       }
 
       return matchSearch && matchRede && matchLocal && matchLocalDif && matchMun && matchAcesso;

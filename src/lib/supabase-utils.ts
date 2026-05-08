@@ -7,7 +7,7 @@
  * @param batchSize Number of rows per batch (default 1000)
  * @returns Array of all results
  */
-export async function fetchAllRows<T = any>(
+export async function fetchAllRows<T = Record<string, unknown>>(
   query: any,
   batchSize: number = 1000
 ): Promise<T[]> {
