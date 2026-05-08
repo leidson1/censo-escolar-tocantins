@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import { Search, ChevronDown, ChevronUp, UserCircle, X, School, Users, GraduationCap, Layout, Book, MapPin, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getLabel, getValueLabel } from "@/lib/censo-dict";
 import { RawDataSection } from "./CensoDashboard";
 
 /** Dashboard genérico para arquivos com estrutura CO_ENTIDADE + UNIDADE + MUNICIPIO + campos QT_ */
@@ -13,7 +12,7 @@ interface GenericRecord {
   NO_MUNICIPIO: string;
   TP_DEPENDENCIA?: number;
   TP_LOCALIZACAO?: number;
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface KpiDef {
