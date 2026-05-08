@@ -20,7 +20,15 @@ export default function CensoDictionary() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("all");
 
-  const tables = ["all", "escola", "gestor", "docente", "matricula", "turma"];
+  const tables = [
+    { id: "all", label: "Todas" },
+    { id: "escola", label: "Escola" },
+    { id: "gestor", label: "Gestor" },
+    { id: "docente", label: "Docente" },
+    { id: "matricula", label: "Matrícula" },
+    { id: "turma", label: "Turma" },
+    { id: "curso_tecnico", label: "Cursos" }
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -36,15 +44,32 @@ export default function CensoDictionary() {
       .order("nome_variavel", { ascending: true });
 
     if (search) {
-      query = query.or(`nome_variavel.ilike.%${search}%,descricao.ilike.%${search}%`);
+      // Melhora a pesquisa para aceitar termos com underscore ou espaços
+      const cleanSearch = search.replace(/_/g, " ").trim();
+      const searchPattern = `"%${search}%"`;
+      const cleanPattern = `"%${cleanSearch}%"`;
+      
+      query = query.or(`nome_variavel.ilike.${searchPattern},descricao.ilike.${searchPattern},descricao.ilike.${cleanPattern}`);
     }
 
     if (activeTab !== "all") {
       query = query.eq("tabela", activeTab);
     }
 
-    const { data } = await query.limit(50);
-    setItems(data || []);
+    const { data } = await query.limit(100);
+    
+    // Correção de labels trocados vindo do banco (NO = Nome, CO = Código)
+    const processedData = (data || []).map(item => {
+      if (item.nome_variavel === "NO_ENTIDADE" && item.descricao.includes("Código")) {
+        return { ...item, descricao: "Nome da Escola" };
+      }
+      if (item.nome_variavel === "CO_ENTIDADE" && item.descricao.includes("Nome")) {
+        return { ...item, descricao: "Código da Escola" };
+      }
+      return item;
+    });
+
+    setItems(processedData);
     setLoading(false);
   };
 
@@ -79,7 +104,7 @@ export default function CensoDictionary() {
               className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col"
             >
               {/* Header */}
-              <div className="p-6 bg-[#0D6E3F] text-white">
+              <div className="p-6 bg-[#0D6E3F] text-white flex-shrink-0 relative z-20 shadow-md">
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-lg">
@@ -112,27 +137,27 @@ export default function CensoDictionary() {
               </div>
 
               {/* Tabs */}
-              <div className="flex overflow-x-auto p-3 bg-gray-50 border-b border-gray-100 scrollbar-hide">
+              <div className="flex-shrink-0 flex overflow-x-auto p-3 bg-gray-50 border-b border-gray-100 relative z-10 shadow-sm [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
                 <div className="flex gap-2">
                   {tables.map(table => (
                     <button
-                      key={table}
-                      onClick={() => setActiveTab(table)}
+                      key={table.id}
+                      onClick={() => setActiveTab(table.id)}
                       className={`
                         px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border
-                        ${activeTab === table 
+                        ${activeTab === table.id 
                           ? "bg-white text-[#0D6E3F] shadow-sm border-green-100" 
                           : "bg-transparent text-gray-400 border-transparent hover:text-gray-600"}
                       `}
                     >
-                      {table === "all" ? "Todas" : table}
+                      {table.label}
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* List */}
-              <div className="flex-grow overflow-y-auto p-4 space-y-3">
+              <div className="flex-grow overflow-y-auto p-4 space-y-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-100 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-200">
                 {loading && (
                   <div className="flex flex-col items-center justify-center h-64 text-gray-400 space-y-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0D6E3F]"></div>
