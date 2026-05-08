@@ -577,7 +577,7 @@ export function RawDataSection({
                       </div>
                       {(displayVal !== String(value)) && (
                         <div className="text-[8px] text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
-                          {value}
+                          {String(value)}
                         </div>
                       )}
                     </div>

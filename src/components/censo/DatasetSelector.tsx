@@ -11,13 +11,13 @@ import GenericCensoDashboard from "./GenericCensoDashboard";
 type Dataset = "escolas" | "gestores" | "docentes" | "matriculas" | "turmas" | "cursos";
 
 interface DatasetSelectorProps {
-  schools: unknown[];
-  stats: Record<string, unknown>;
-  gestores: unknown[];
-  docentes: unknown[];
-  matriculas: unknown[];
-  turmas: unknown[];
-  cursosTecnicos: unknown[];
+  schools: Record<string, unknown>[];
+  stats: Record<string, number>;
+  gestores: Record<string, unknown>[];
+  docentes: Record<string, unknown>[];
+  matriculas: Record<string, unknown>[];
+  turmas: Record<string, unknown>[];
+  cursosTecnicos: Record<string, unknown>[];
 }
 
 const tabs: { id: Dataset; label: string; icon: React.ElementType; desc: string; color: string; active: string }[] = [
@@ -120,12 +120,12 @@ export default function DatasetSelector({
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
         >
-          {active === "escolas" && <CensoDashboard schools={schools as any} stats={stats as any} />}
-          {active === "gestores" && <GestoresDashboard gestores={gestores as any} />}
-          {active === "docentes" && <DocentesDashboard docentes={docentes as any} />}
+          {active === "escolas" && <CensoDashboard schools={schools as never} stats={stats as never} />}
+          {active === "gestores" && <GestoresDashboard gestores={gestores as never} />}
+          {active === "docentes" && <DocentesDashboard docentes={docentes as never} />}
           {active === "matriculas" && (
             <GenericCensoDashboard
-              data={matriculas as any}
+              data={matriculas as never}
               color="green"
               searchPlaceholder="Buscar por escola..."
               showTotalUnits={false}
@@ -153,7 +153,7 @@ export default function DatasetSelector({
           )}
           {active === "turmas" && (
             <GenericCensoDashboard
-              data={turmas as any}
+              data={turmas as never}
               color="teal"
               searchPlaceholder="Buscar por escola..."
               showTotalUnits={false}
@@ -180,7 +180,7 @@ export default function DatasetSelector({
           )}
           {active === "cursos" && (
             <GenericCensoDashboard
-              data={cursosTecnicos as any}
+              data={cursosTecnicos as never}
               color="rose"
               searchPlaceholder="Buscar curso..."
               showTotalUnits={false}

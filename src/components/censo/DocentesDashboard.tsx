@@ -19,6 +19,7 @@ interface DocenteRecord {
   local: number;
   localDif: number;
   QT_DOC_BAS: number;
+  QT_DOC_INF: number;
   QT_DOC_FUND: number;
   QT_DOC_MED: number;
   QT_DOC_BAS_ESCO_SUP_POS_ESPEC: number;

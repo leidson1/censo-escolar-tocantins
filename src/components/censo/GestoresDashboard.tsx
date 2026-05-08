@@ -71,6 +71,12 @@ interface Gestor {
   QT_GEST_BAS_ESPEC_GESTAO: number;
   QT_GEST_BAS_ESPEC_EDUC_TIC: number;
   QT_GEST_BAS_ESPEC_NENHUM: number;
+  QT_GEST_BAS_ACESSO_CARGO_P_SEL: number;
+  QT_GEST_BAS_ACESSO_CARGO_OUTRO: number;
+  rede: number;
+  local: number;
+  localDif: number;
+  NO_MUNICIPIO: string;
   [key: string]: string | number | boolean | null | undefined;
 }
 
@@ -117,7 +123,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
         matchAcesso = g.QT_GEST_BAS > 0 && sum === 0;
       } else if (acessoFilter !== "all") {
         const key = `QT_GEST_BAS_ACESSO_CARGO_${acessoFilter.toUpperCase()}`;
-        matchAcesso = (g[key] || 0) > 0;
+        matchAcesso = (Number(g[key]) || 0) > 0;
       }
 
       return matchSearch && matchRede && matchLocal && matchLocalDif && matchMun && matchAcesso;

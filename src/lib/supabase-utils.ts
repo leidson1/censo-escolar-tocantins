@@ -8,7 +8,7 @@
  * @returns Array of all results
  */
 export async function fetchAllRows<T = Record<string, unknown>>(
-  query: { range: (from: number, to: number) => Promise<{ data: T[] | null; error: unknown }> },
+  query: any,
   batchSize: number = 1000
 ): Promise<T[]> {
   let allData: T[] = [];

@@ -1,8 +1,8 @@
 /**
  * Map Supabase column names to the legacy JSON names used in the UI
  */
-export const mapGenericData = (row: Record<string, unknown>) => {
-  if (!row) return null;
+export const mapGenericData = (row: any): Record<string, any> => {
+  if (!row) return {};
   
   // Helper for numeric conversion
   const n = (v: unknown) => Number(v || 0);
@@ -109,8 +109,8 @@ export const mapGenericData = (row: Record<string, unknown>) => {
   };
 };
 
-export const mapSchoolData = (supabaseRow: Record<string, unknown>) => {
-  if (!supabaseRow) return null;
+export const mapSchoolData = (supabaseRow: any): Record<string, any> => {
+  if (!supabaseRow) return {};
 
   return {
     ...supabaseRow,
@@ -150,7 +150,7 @@ export const mapSchoolData = (supabaseRow: Record<string, unknown>) => {
   };
 };
 
-export const mapSchoolSummary = (row: Record<string, unknown>) => {
+export const mapSchoolSummary = (row: any): Record<string, any> => {
   return {
     id: Number(row.codigo_da_escola),
     nome: row.nome_da_escola || "Sem nome",

@@ -93,8 +93,8 @@ export default function GenericCensoDashboard({
     const list = data.filter(r => {
       const matchSearch = r.UNIDADE?.toLowerCase().includes(term) || String(r.CO_ENTIDADE).includes(term);
       const matchMun   = municipio === "Todos" || r.NO_MUNICIPIO === municipio;
-      const matchRede  = rede === "Todas" || REDE[r.rede ?? 0] === rede;
-      const matchLocal = local === "Todas" || LOCAL[r.local ?? 0] === local;
+      const matchRede  = rede === "Todas" || REDE[Number(r.rede ?? 0)] === rede;
+      const matchLocal = local === "Todas" || LOCAL[Number(r.local ?? 0)] === local;
       
       // Course Filter (if applicable)
       const matchCourse = !courseField || selectedCourse === "Todos" || r[courseField] === selectedCourse;
@@ -262,7 +262,7 @@ export default function GenericCensoDashboard({
                   <td className="p-4 text-gray-500 text-sm">{r.NO_MUNICIPIO}</td>
                   <td className="p-4">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${c.badge}`}>
-                      {REDE[r.rede ?? 0] ?? "—"}
+                      {REDE[Number(r.rede ?? 0)] ?? "—"}
                     </span>
                   </td>
                   {tableFields.map(tf => (
