@@ -1,14 +1,19 @@
 "use server";
 
 
-import escolasFixData from '@/data/escolas-fix.json';
-
-// Dados desativados
-const gestoresData: any[] = [];
+import { supabase } from '@/lib/supabase';
+import { mapSchoolData } from '@/lib/supabase-mapping';
 
 export async function getSchoolDetails(schoolId: number) {
   try {
-    return (escolasFixData as any[]).find((s: any) => s.CO_ENTIDADE === schoolId) || null;
+    const { data, error } = await supabase
+      .from('escolas_2025_to')
+      .select('*')
+      .eq('codigo_da_escola', schoolId)
+      .single();
+
+    if (error) throw error;
+    return mapSchoolData(data);
   } catch (error) {
     console.error('Error fetching school details:', error);
     return null;
@@ -16,5 +21,5 @@ export async function getSchoolDetails(schoolId: number) {
 }
 
 export async function getGestoresData() {
-  return gestoresData;
+  return [];
 }

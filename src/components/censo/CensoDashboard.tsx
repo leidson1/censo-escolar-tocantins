@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, MapPin, School, Wifi, WifiOff, Info, Filter, ArrowUpDown, ExternalLink, Database, HelpCircle } from "lucide-react";
+import { Search, MapPin, School, Wifi, WifiOff, Info, Filter, ArrowUpDown, ExternalLink, Database, HelpCircle, Layout, UserCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSchoolDetails } from "@/app/censo-2025/actions";
 import { getLabel, getValueLabel, getDictEntry } from "@/lib/censo-dict";
@@ -12,6 +12,8 @@ interface SchoolSummary {
   municipio: string;
   rede: number;
   local: number;
+  localDiferenciada: number;
+  situacao: number;
   internet: boolean;
   salas: number;
 }
@@ -42,10 +44,27 @@ const LOCAL_LABELS: Record<number, string> = {
   2: "Rural",
 };
 
+const LOCAL_DIF_LABELS: Record<number, string> = {
+  0: "Não se aplica",
+  1: "Assentamento",
+  2: "Terra Indígena",
+  3: "Quilombola",
+};
+
+const SITUACAO_LABELS: Record<number, string> = {
+  1: "Em Atividade",
+  2: "Paralisada",
+  3: "Extinta (Ano Anterior)",
+  4: "Extinta",
+};
+
 export default function CensoDashboard({ schools, stats }: CensoDashboardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [municipioFilter, setMunicipioFilter] = useState("Todos");
   const [redeFilter, setRedeFilter] = useState("Todas");
+  const [localFilter, setLocalFilter] = useState("Todas");
+  const [localDifFilter, setLocalDifFilter] = useState("Todas");
+  const [situacaoFilter, setSituacaoFilter] = useState("Todas");
   const [selectedSchool, setSelectedSchool] = useState<any | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [rawSearch, setRawSearch] = useState("");
@@ -55,15 +74,29 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
     return ["Todos", ...list];
   }, [schools]);
 
-  const filteredSchools = useMemo(() => {
+  const allFilteredSchools = useMemo(() => {
     return schools.filter(school => {
       const matchesSearch = school.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            school.id.toString().includes(searchTerm);
       const matchesMunicipio = municipioFilter === "Todos" || school.municipio === municipioFilter;
       const matchesRede = redeFilter === "Todas" || REDE_LABELS[school.rede] === redeFilter;
-      return matchesSearch && matchesMunicipio && matchesRede;
-    }).slice(0, 100);
-  }, [schools, searchTerm, municipioFilter, redeFilter]);
+      const matchesLocal = localFilter === "Todas" || LOCAL_LABELS[school.local] === localFilter;
+      const matchesLocalDif = localDifFilter === "Todas" || LOCAL_DIF_LABELS[school.localDiferenciada] === localDifFilter;
+      const matchesSituacao = situacaoFilter === "Todas" || SITUACAO_LABELS[school.situacao] === situacaoFilter;
+      return matchesSearch && matchesMunicipio && matchesRede && matchesLocal && matchesLocalDif && matchesSituacao;
+    });
+  }, [schools, searchTerm, municipioFilter, redeFilter, localFilter, localDifFilter, situacaoFilter]);
+
+  const filteredStats = useMemo(() => {
+    const total = allFilteredSchools.length;
+    const salas = allFilteredSchools.reduce((acc, s) => acc + s.salas, 0);
+    const internet = allFilteredSchools.filter(s => s.internet).length;
+    return { total, salas, internet };
+  }, [allFilteredSchools]);
+
+  const displayedSchools = useMemo(() => {
+    return allFilteredSchools.slice(0, 100);
+  }, [allFilteredSchools]);
 
   const handleShowDetails = async (id: number) => {
     setIsLoadingDetails(true);
@@ -73,71 +106,178 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
     setIsLoadingDetails(false);
   };
 
-  // Filter raw data entries based on search
-  const rawEntries = useMemo(() => {
-    if (!selectedSchool) return [];
-    const term = rawSearch.toLowerCase();
-    return Object.entries(selectedSchool).filter(([key, value]) => {
-      if (value === null || value === undefined || value === "") return false;
-      if (!term) return true;
-      const label = getLabel(key).toLowerCase();
-      const valStr = getValueLabel(key, value).toLowerCase();
-      return key.toLowerCase().includes(term) || label.includes(term) || valStr.includes(term);
-    });
-  }, [selectedSchool, rawSearch]);
-
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title="Total de Escolas" value={stats.total} icon={<School />} color="bg-blue-50 text-blue-600" />
-        <StatCard title="Rede Estadual" value={stats.estaduais} icon={<MapPin />} color="bg-green-50 text-green-600" />
-        <StatCard title="Rede Municipal" value={stats.municipais} icon={<MapPin />} color="bg-orange-50 text-orange-600" />
-        <StatCard title="Acesso à Internet" value={`${Math.round((stats.comInternet / stats.total) * 100)}%`} icon={<Wifi />} color="bg-purple-50 text-purple-600" />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <StatCard title="Total (Ativas)" value={stats.total} icon={<School />} color="bg-blue-50 text-blue-600" />
+        <StatCard title="Estaduais (Ativas)" value={stats.estaduais} icon={<MapPin />} color="bg-green-50 text-green-600" />
+        <StatCard title="Municipais (Ativas)" value={stats.municipais} icon={<MapPin />} color="bg-orange-50 text-orange-600" />
+        <StatCard title="Federais (Ativas)" value={stats.federais} icon={<MapPin />} color="bg-indigo-50 text-indigo-600" />
+        <StatCard title="Privadas (Ativas)" value={stats.privadas} icon={<MapPin />} color="bg-rose-50 text-rose-600" />
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
-        <div className="flex-grow space-y-2 w-full">
-          <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
-            <Search size={14} /> Buscar Escola ou Código INEP
-          </label>
-          <input
-            type="text"
-            placeholder="Ex: Escola Estadual..."
-            className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+        <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-grow space-y-2 w-full">
+            <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <Search size={14} /> Buscar Escola ou Código INEP
+            </label>
+            <input
+              type="text"
+              placeholder="Ex: Escola Estadual..."
+              className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="w-full md:w-64 space-y-2">
+            <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <Filter size={14} /> Município
+            </label>
+            <select
+              className="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-green-500"
+              value={municipioFilter}
+              onChange={(e) => setMunicipioFilter(e.target.value)}
+            >
+              {municipios.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
         </div>
-        <div className="w-full md:w-64 space-y-2">
-          <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
-            <Filter size={14} /> Município
-          </label>
-          <select
-            className="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-green-500"
-            value={municipioFilter}
-            onChange={(e) => setMunicipioFilter(e.target.value)}
-          >
-            {municipios.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <ArrowUpDown size={12} /> Rede
+            </label>
+            <select
+              className="w-full p-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              value={redeFilter}
+              onChange={(e) => setRedeFilter(e.target.value)}
+            >
+              <option value="Todas">Todas as Redes</option>
+              <option value="Estadual">Estadual</option>
+              <option value="Municipal">Municipal</option>
+              <option value="Privada">Privada</option>
+              <option value="Federal">Federal</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <MapPin size={12} /> Localização
+            </label>
+            <select
+              className="w-full p-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              value={localFilter}
+              onChange={(e) => setLocalFilter(e.target.value)}
+            >
+              <option value="Todas">Todas (Urb/Rur)</option>
+              <option value="Urbana">Urbana</option>
+              <option value="Rural">Rural</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <Filter size={12} /> Tipo de Local
+            </label>
+            <select
+              className="w-full p-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              value={localDifFilter}
+              onChange={(e) => setLocalDifFilter(e.target.value)}
+            >
+              <option value="Todas">Todos os Tipos</option>
+              <option value="Não se aplica">Não se aplica</option>
+              <option value="Assentamento">Assentamento</option>
+              <option value="Terra Indígena">Terra Indígena</option>
+              <option value="Quilombola">Quilombola</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <Info size={12} /> Situação
+            </label>
+            <select
+              className="w-full p-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              value={situacaoFilter}
+              onChange={(e) => setSituacaoFilter(e.target.value)}
+            >
+              <option value="Todas">Todas Situações</option>
+              <option value="Em Atividade">Em Atividade</option>
+              <option value="Paralisada">Paralisada</option>
+              <option value="Extinta">Extinta</option>
+            </select>
+          </div>
         </div>
-        <div className="w-full md:w-48 space-y-2">
-          <label className="text-sm font-medium text-gray-500 flex items-center gap-2">
-            <ArrowUpDown size={14} /> Rede
-          </label>
-          <select
-            className="w-full p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-green-500"
-            value={redeFilter}
-            onChange={(e) => setRedeFilter(e.target.value)}
-          >
-            <option value="Todas">Todas</option>
-            <option value="Estadual">Estadual</option>
-            <option value="Municipal">Municipal</option>
-            <option value="Privada">Privada</option>
-            <option value="Federal">Federal</option>
-          </select>
-        </div>
+      </div>
+
+      {/* Quantitative Results Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-100 group-hover:scale-110 transition-transform">
+              <School size={20} />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.1em]">Escolas Filtradas</div>
+              <div className="text-2xl font-black text-gray-800 tracking-tight">{filteredStats.total}</div>
+            </div>
+          </div>
+          <div className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">
+            Resultados
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white p-5 rounded-2xl shadow-sm border border-purple-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-purple-500 text-white rounded-xl shadow-lg shadow-purple-100 group-hover:scale-110 transition-transform">
+              <Layout size={20} />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-purple-400 uppercase tracking-[0.1em]">Total de Salas</div>
+              <div className="text-2xl font-black text-gray-800 tracking-tight">{filteredStats.salas}</div>
+            </div>
+          </div>
+          <div className="text-[10px] font-bold text-purple-500 bg-purple-50 px-2 py-1 rounded-full">
+            Infraestrutura
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white p-5 rounded-2xl shadow-sm border border-green-100 flex items-center justify-between group hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500 text-white rounded-xl shadow-lg shadow-green-100 group-hover:scale-110 transition-transform">
+              <Wifi size={20} />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-green-400 uppercase tracking-[0.1em]">Conectividade</div>
+              <div className="text-2xl font-black text-gray-800 tracking-tight">
+                {filteredStats.total > 0 ? `${Math.round((filteredStats.internet / filteredStats.total) * 100)}%` : "0%"}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <div className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              {filteredStats.internet} unidades
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Table Section */}
@@ -151,11 +291,11 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                 <th className="p-4 font-semibold text-gray-600 text-sm">Rede</th>
                 <th className="p-4 font-semibold text-gray-600 text-sm">Local</th>
                 <th className="p-4 font-semibold text-gray-600 text-sm">Internet</th>
-                <th className="p-4 font-semibold text-gray-600 text-sm text-center">Ações</th>
+                <th className="p-4 font-semibold text-gray-500 text-xs text-center">Detalhes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredSchools.map((school) => (
+              {displayedSchools.map((school) => (
                 <motion.tr
                   layout
                   initial={{ opacity: 0 }}
@@ -170,8 +310,10 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   <td className="p-4 text-gray-600 text-sm">{school.municipio}</td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                      school.rede === 1 ? "bg-indigo-100 text-indigo-700" :
                       school.rede === 2 ? "bg-green-100 text-green-700" :
                       school.rede === 3 ? "bg-orange-100 text-orange-700" :
+                      school.rede === 4 ? "bg-rose-100 text-rose-700" :
                       "bg-gray-100 text-gray-700"
                     }`}>
                       {REDE_LABELS[school.rede]}
@@ -187,23 +329,23 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleShowDetails(school.id)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center gap-1 text-sm"
+                      className="p-1.5 rounded-lg transition-colors inline-flex items-center gap-1 text-xs text-[#0D6E3F] hover:bg-green-50"
                     >
-                      <Info size={16} /> Detalhes
+                      <UserCircle size={15} /> Ver
                     </button>
                   </td>
                 </motion.tr>
               ))}
             </tbody>
           </table>
-          {filteredSchools.length === 0 && (
+          {displayedSchools.length === 0 && (
             <div className="p-12 text-center text-gray-400">
               Nenhuma escola encontrada com esses filtros.
             </div>
           )}
-          {filteredSchools.length >= 100 && (
+          {allFilteredSchools.length > 100 && (
             <div className="p-4 bg-gray-50 text-center text-xs text-gray-500">
-              Mostrando os primeiros 100 resultados. Refine sua busca para encontrar uma escola específica.
+              Mostrando os primeiros 100 de {allFilteredSchools.length} resultados. Refine sua busca para encontrar uma escola específica.
             </div>
           )}
         </div>
@@ -226,9 +368,11 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl relative overflow-hidden flex flex-col"
             >
-              <div className="p-6 bg-gradient-to-r from-[#0D6E3F] to-green-600 text-white flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-bold">{String(selectedSchool.NO_ENTIDADE)}</h2>
+              <div className="p-6 bg-gradient-to-r from-[#0D6E3F] to-green-600 text-white flex justify-between items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight drop-shadow-sm break-words pr-4">
+                    {String(selectedSchool.NO_ENTIDADE)}
+                  </h2>
                   <p className="text-green-100 text-sm flex items-center gap-2">
                     <MapPin size={14} /> {String(selectedSchool.NO_MUNICIPIO)} - TO | INEP: {String(selectedSchool.CO_ENTIDADE)}
                   </p>
@@ -242,67 +386,34 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                 {/* Structured sections */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <DetailSection title="Infraestrutura Básica">
-                    <DetailItem label="Água Potável" value={selectedSchool.IN_AGUA_POTAVEL ? "Sim" : "Não"} active={!!selectedSchool.IN_AGUA_POTAVEL} />
-                    <DetailItem label="Energia Elétrica" value={selectedSchool.IN_ENERGIA_REDE_PUBLICA ? "Sim" : "Não"} active={!!selectedSchool.IN_ENERGIA_REDE_PUBLICA} />
-                    <DetailItem label="Esgoto Sanitário" value={selectedSchool.IN_ESGOTO_REDE_PUBLICA ? "Sim" : "Não"} active={!!selectedSchool.IN_ESGOTO_REDE_PUBLICA} />
-                    <DetailItem label="Coleta de Lixo" value={selectedSchool.IN_LIXO_SERVICO_COLETA ? "Sim" : "Não"} active={!!selectedSchool.IN_LIXO_SERVICO_COLETA} />
-                    <DetailItem label="Alimentação Escolar" value={selectedSchool.IN_ALIMENTACAO ? "Sim" : "Não"} active={!!selectedSchool.IN_ALIMENTACAO} />
-                    <DetailItem label="Início Ano Letivo" value={String(selectedSchool.DT_ANO_LETIVO_INICIO)} />
-                    <DetailItem label="Término Ano Letivo" value={String(selectedSchool.DT_ANO_LETIVO_TERMINO)} />
+                    <DetailItem label="Água Potável" value={getValueLabel("IN_AGUA_POTAVEL", selectedSchool.IN_AGUA_POTAVEL)} state={selectedSchool.IN_AGUA_POTAVEL} />
+                    <DetailItem label="Energia Elétrica" value={getValueLabel("IN_ENERGIA_REDE_PUBLICA", selectedSchool.IN_ENERGIA_REDE_PUBLICA)} state={selectedSchool.IN_ENERGIA_REDE_PUBLICA} />
+                    <DetailItem label="Esgoto Sanitário" value={getValueLabel("IN_ESGOTO_REDE_PUBLICA", selectedSchool.IN_ESGOTO_REDE_PUBLICA)} state={selectedSchool.IN_ESGOTO_REDE_PUBLICA} />
+                    <DetailItem label="Coleta de Lixo" value={getValueLabel("IN_LIXO_SERVICO_COLETA", selectedSchool.IN_LIXO_SERVICO_COLETA)} state={selectedSchool.IN_LIXO_SERVICO_COLETA} />
+                    <DetailItem label="Alimentação Escolar" value={getValueLabel("IN_ALIMENTACAO", selectedSchool.IN_ALIMENTACAO)} state={selectedSchool.IN_ALIMENTACAO} />
                   </DetailSection>
 
                   <DetailSection title="Tecnologia e TI">
-                    <DetailItem label="Internet" value={selectedSchool.IN_INTERNET ? "Sim" : "Não"} active={!!selectedSchool.IN_INTERNET} />
-                    <DetailItem label="Banda Larga" value={selectedSchool.IN_BANDA_LARGA ? "Sim" : "Não"} active={!!selectedSchool.IN_BANDA_LARGA} />
-                    <DetailItem label="Laboratório Informática" value={selectedSchool.IN_LABORATORIO_INFORMATICA ? "Sim" : "Não"} active={!!selectedSchool.IN_LABORATORIO_INFORMATICA} />
-                    <DetailItem label="Desktops Alunos" value={Number(selectedSchool.QT_DESKTOP_ALUNO) || 0} />
-                    <DetailItem label="Laptops Alunos" value={Number(selectedSchool.QT_COMP_PORTATIL_ALUNO) || 0} />
-                    <DetailItem label="Tablets Alunos" value={Number(selectedSchool.QT_TABLET_ALUNO) || 0} />
-                    <DetailItem label="Acesso para Comunidade" value={selectedSchool.IN_INTERNET_COMUNIDADE ? "Sim" : "Não"} />
-                  </DetailSection>
-
-                  <DetailSection title="Espaços Físicos">
-                    <DetailItem label="Total de Salas" value={Number(selectedSchool.QT_SALAS_UTILIZADAS) || 0} />
-                    <DetailItem label="Salas Climatizadas" value={Number(selectedSchool.QT_SALAS_UTILIZA_CLIMATIZADAS) || 0} />
-                    <DetailItem label="Biblioteca" value={selectedSchool.IN_BIBLIOTECA ? "Sim" : "Não"} active={!!selectedSchool.IN_BIBLIOTECA} />
-                    <DetailItem label="Quadra Esportes" value={selectedSchool.IN_QUADRA_ESPORTES ? "Sim" : "Não"} active={!!selectedSchool.IN_QUADRA_ESPORTES} />
-                    <DetailItem label="Refeitório" value={selectedSchool.IN_REFEITORIO ? "Sim" : "Não"} active={!!selectedSchool.IN_REFEITORIO} />
-                    <DetailItem label="Cozinha" value={selectedSchool.IN_COZINHA ? "Sim" : "Não"} active={!!selectedSchool.IN_COZINHA} />
-                    <DetailItem label="Piscina" value={selectedSchool.IN_PISCINA ? "Sim" : "Não"} active={!!selectedSchool.IN_PISCINA} />
-                    <DetailItem label="Parque Infantil" value={selectedSchool.IN_PARQUE_INFANTIL ? "Sim" : "Não"} active={!!selectedSchool.IN_PARQUE_INFANTIL} />
-                  </DetailSection>
-
-                  <DetailSection title="Equipamentos">
-                    <DetailItem label="TVs" value={Number(selectedSchool.QT_EQUIP_TV) || 0} />
-                    <DetailItem label="Aparelhos de Som" value={Number(selectedSchool.QT_EQUIP_SOM) || 0} />
-                    <DetailItem label="Lousas Digitais" value={Number(selectedSchool.QT_EQUIP_LOUSA_DIGITAL) || 0} />
-                    <DetailItem label="Projetores (DataShow)" value={Number(selectedSchool.QT_EQUIP_MULTIMIDIA) || 0} />
-                    <DetailItem label="Impressoras" value={selectedSchool.IN_EQUIP_IMPRESSORA ? "Sim" : "Não"} active={!!selectedSchool.IN_EQUIP_IMPRESSORA} />
-                    <DetailItem label="Copiadoras" value={selectedSchool.IN_EQUIP_COPIADORA ? "Sim" : "Não"} active={!!selectedSchool.IN_EQUIP_COPIADORA} />
-                  </DetailSection>
-
-                  <DetailSection title="Recursos Humanos">
-                    <DetailItem label="Prof. Administrativos" value={Number(selectedSchool.QT_PROF_ADMINISTRATIVOS) || 0} />
-                    <DetailItem label="Prof. Serviços Gerais" value={Number(selectedSchool.QT_PROF_SERVICOS_GERAIS) || 0} />
-                    <DetailItem label="Bibliotecário" value={Number(selectedSchool.QT_PROF_BIBLIOTECARIO) || 0} />
-                    <DetailItem label="Psicólogo" value={Number(selectedSchool.QT_PROF_PSICOLOGO) || 0} />
-                    <DetailItem label="Nutricionista" value={Number(selectedSchool.QT_PROF_NUTRICIONISTA) || 0} />
-                    <DetailItem label="Assistente Social" value={Number(selectedSchool.QT_PROF_ASSIST_SOCIAL) || 0} />
-                    <DetailItem label="Segurança/Vigilante" value={Number(selectedSchool.QT_PROF_SEGURANCA) || 0} />
-                  </DetailSection>
-
-                  <DetailSection title="Etapas de Ensino">
-                    <DetailItem label="Ensino Regular" value={selectedSchool.IN_REGULAR ? "Sim" : "Não"} active={!!selectedSchool.IN_REGULAR} />
-                    <DetailItem label="Educação Especial" value={selectedSchool.IN_ESPECIAL_EXCLUSIVA ? "Sim" : "Não"} active={!!selectedSchool.IN_ESPECIAL_EXCLUSIVA} />
-                    <DetailItem label="EJA" value={selectedSchool.IN_EJA ? "Sim" : "Não"} active={!!selectedSchool.IN_EJA} />
-                    <DetailItem label="Ensino Profissional" value={selectedSchool.IN_PROFISSIONALIZANTE ? "Sim" : "Não"} active={!!selectedSchool.IN_PROFISSIONALIZANTE} />
-                    <DetailItem label="Ensino Fundamental AF" value={selectedSchool.IN_COMUM_FUND_AF ? "Sim" : "Não"} active={!!selectedSchool.IN_COMUM_FUND_AF} />
-                    <DetailItem label="Ensino Médio" value={selectedSchool.IN_COMUM_MEDIO_MEDIO ? "Sim" : "Não"} active={!!selectedSchool.IN_COMUM_MEDIO_MEDIO} />
+                    <DetailItem label="Internet" value={getValueLabel("IN_INTERNET", selectedSchool.IN_INTERNET)} state={selectedSchool.IN_INTERNET} />
+                    <DetailItem label="Banda Larga" value={getValueLabel("IN_BANDA_LARGA", selectedSchool.IN_BANDA_LARGA)} state={selectedSchool.IN_BANDA_LARGA} />
+                    <DetailItem label="Laboratório Informática" value={getValueLabel("IN_LABORATORIO_INFORMATICA", selectedSchool.IN_LABORATORIO_INFORMATICA)} state={selectedSchool.IN_LABORATORIO_INFORMATICA} />
+                    <DetailItem label="Desktops Alunos" value={getValueLabel("QT_DESKTOP_ALUNO", selectedSchool.QT_DESKTOP_ALUNO)} state={selectedSchool.QT_DESKTOP_ALUNO} />
                   </DetailSection>
                 </div>
 
                 {/* Raw Data with Dictionary */}
-                <RawDataSection data={selectedSchool} accentColor="green" />
+                <RawDataSection 
+                  data={selectedSchool} 
+                  rawSearch={rawSearch} 
+                  setRawSearch={setRawSearch} 
+                  accentColor="indigo" 
+                  excludeKeys={[
+                    "nome", "municipio", "rede", "local", "internet", "salas",
+                    "CO_ENTIDADE", "NO_ENTIDADE", "NO_MUNICIPIO", "TP_DEPENDENCIA", "TP_LOCALIZACAO",
+                    "IN_INTERNET", "IN_BANDA_LARGA", "IN_LABORATORIO_INFORMATICA", "QT_DESKTOP_ALUNO",
+                    "DS_ENDERECO", "NU_ENDERECO", "NO_BAIRRO", "NU_DDD", "NU_TELEFONE"
+                  ]}
+                />
 
                 {/* Address */}
                 <div className="mt-6 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -311,9 +422,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   </h4>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><span className="font-semibold">Endereço:</span> {String(selectedSchool.DS_ENDERECO)}, {String(selectedSchool.NU_ENDERECO)}</p>
-                    {!!selectedSchool.DS_COMPLEMENTO && <p><span className="font-semibold">Complemento:</span> {String(selectedSchool.DS_COMPLEMENTO)}</p>}
                     <p><span className="font-semibold">Bairro:</span> {String(selectedSchool.NO_BAIRRO || "Não informado")}</p>
-                    <p><span className="font-semibold">CEP:</span> {String(selectedSchool.CO_CEP)} | <span className="font-semibold">Município:</span> {String(selectedSchool.NO_MUNICIPIO)} - TO</p>
                     <p><span className="font-semibold">Telefone:</span> ({String(selectedSchool.NU_DDD)}) {String(selectedSchool.NU_TELEFONE)}</p>
                   </div>
                 </div>
@@ -328,101 +437,177 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
 
 // ── Shared Raw Data Section ────────────────────────────────────────────
 
-export function RawDataSection({ data, accentColor = "green" }: { data: Record<string, unknown>; accentColor?: "green" | "indigo" }) {
-  const [rawSearch, setRawSearch] = useState("");
-  const [showOnlyNonZero, setShowOnlyNonZero] = useState(false);
+const PREFIX_LABELS: Record<string, string> = {
+  "IN_": "Infraestrutura e Recursos",
+  "QT_": "Quantitativos e Totais",
+  "NO_": "Identificação e Nomes",
+  "TP_": "Tipos e Classificações",
+  "CO_": "Códigos e Chaves",
+  "NU_": "Numéricos e Datas",
+  "DS_": "Descrições",
+};
 
-  const ring   = accentColor === "green" ? "focus:ring-green-500" : "focus:ring-indigo-400";
-  const border = accentColor === "green" ? "border-green-500" : "border-indigo-500";
-  const text   = accentColor === "green" ? "text-[#0D6E3F]" : "text-indigo-700";
+export function RawDataSection({ 
+  data, 
+  rawSearch, 
+  setRawSearch, 
+  accentColor = "blue",
+  excludeKeys = [] 
+}: { 
+  data: any, 
+  rawSearch: string, 
+  setRawSearch: (v: string) => void, 
+  accentColor?: string,
+  excludeKeys?: string[]
+}) {
+  const [showOnlyNonZero, setShowOnlyNonZero] = useState(false);
 
   const entries = useMemo(() => {
     const term = rawSearch.toLowerCase();
+    const exclude = new Set([
+      ...excludeKeys, 
+      "id", "raw_data", "unidade", "municipio", "rede", "local", "localDif", "situacao",
+      "NO_ENTIDADE", "CO_ENTIDADE", "NO_MUNICIPIO", "UNIDADE"
+    ]);
+    
     return Object.entries(data).filter(([key, value]) => {
+      if (exclude.has(key)) return false;
       if (value === null || value === undefined || value === "") return false;
-      if (showOnlyNonZero && value === 0) return false;
+      if (showOnlyNonZero && (value === 0 || value === "0")) return false;
+      
       if (!term) return true;
       const label = getLabel(key).toLowerCase();
       const valStr = getValueLabel(key, value).toLowerCase();
       return key.toLowerCase().includes(term) || label.includes(term) || valStr.includes(term);
     });
-  }, [data, rawSearch, showOnlyNonZero]);
+  }, [data, rawSearch, showOnlyNonZero, excludeKeys]);
+
+  const groupedEntries = useMemo(() => {
+    const groups: Record<string, [string, any][]> = {};
+    entries.forEach(([key, value]) => {
+      const prefix = key.substring(0, 3).toUpperCase();
+      const cat = PREFIX_LABELS[prefix] || "Outras Informações";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push([key, value]);
+    });
+    return groups;
+  }, [entries]);
+
+  const colorMap: Record<string, string> = {
+    blue: "text-blue-600 bg-blue-50 border-blue-100",
+    green: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    purple: "text-purple-600 bg-purple-50 border-purple-100",
+    indigo: "text-indigo-600 bg-indigo-50 border-indigo-100",
+    rose: "text-rose-600 bg-rose-50 border-rose-100",
+    teal: "text-teal-600 bg-teal-50 border-teal-100",
+    amber: "text-amber-600 bg-amber-50 border-amber-100",
+  };
+
+  const accent = colorMap[accentColor] || colorMap.blue;
+  const accentText = accent.split(" ")[0];
 
   return (
-    <div>
-      <h3 className={`font-bold text-gray-700 border-l-4 ${border} pl-3 text-xs uppercase tracking-wider mb-3 flex items-center gap-2`}>
-        <Database size={13} /> Todos os Campos do Censo (Dados Brutos)
-      </h3>
-
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-3">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-          <input
-            type="text"
-            placeholder="Pesquisar campo, descrição ou valor..."
-            className={`w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 ${ring} outline-none text-xs`}
-            value={rawSearch}
-            onChange={e => setRawSearch(e.target.value)}
-          />
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100 pb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <Database className={accentText} size={20} />
+            Dicionário de Variáveis e Dados Brutos
+          </h2>
+          <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider font-semibold">Exploração técnica de {entries.length} campos</p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-gray-500 bg-white border border-gray-200 rounded-xl px-3 py-2 cursor-pointer hover:border-gray-300 transition-colors whitespace-nowrap">
-          <input
-            type="checkbox"
-            checked={showOnlyNonZero}
-            onChange={e => setShowOnlyNonZero(e.target.checked)}
-            className="rounded"
-          />
-          Apenas valores &gt; 0
-        </label>
-        <span className="flex items-center text-xs text-gray-400 px-2">{entries.length} campos</span>
+        
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          <label className="flex items-center gap-2 text-xs text-gray-500 bg-white border border-gray-200 rounded-xl px-3 py-2 cursor-pointer hover:bg-gray-50 transition-all select-none shadow-sm">
+            <input
+              type="checkbox"
+              checked={showOnlyNonZero}
+              onChange={e => setShowOnlyNonZero(e.target.checked)}
+              className={`rounded focus:ring-2 focus:ring-offset-2 ${accentText}`}
+            />
+            Ocultar valores zerados
+          </label>
+          <div className="relative group">
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:${accentText} transition-colors`} size={16} />
+            <input
+              type="text"
+              placeholder="Pesquisar campos..."
+              className="w-full md:w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 focus:bg-white transition-all shadow-sm"
+              value={rawSearch}
+              onChange={(e) => setRawSearch(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0">
-          {entries.map(([key, value], i) => {
-            const entry = getDictEntry(key);
-            const label = entry?.descricao || key;
-            const displayVal = getValueLabel(key, value);
-            const hasCategory = !!entry?.categoria;
-            const isZero = value === 0;
+      <div className="space-y-8">
+        {Object.entries(groupedEntries).sort().map(([category, items]) => (
+          <div key={category} className="space-y-3">
+            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-3 mb-4">
+              <span className={`w-6 h-[1.5px] rounded-full bg-current ${accentText}`}></span>
+              {category}
+              <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[8px] font-bold">{items.length}</span>
+            </h3>
+            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+              {items.map(([key, value], idx) => {
+                const entry = getDictEntry(key.toUpperCase());
+                let label = entry?.descricao || key;
+                
+                // If no label was found, format the key nicely
+                if (label === key) {
+                  label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                }
 
-            return (
-              <div
-                key={key}
-                className={`flex items-start justify-between gap-3 px-4 py-2.5 border-b border-gray-50 group ${
-                  i % 2 === 0 ? "" : "md:border-l border-gray-50"
-                } ${isZero ? "opacity-50" : ""}`}
-              >
-                <div className="flex-1 min-w-0">
-                  {/* Human label */}
-                  <div className={`text-xs font-medium leading-tight ${isZero ? "text-gray-400" : "text-gray-700"}`}>
-                    {label !== key ? label : <span className="font-mono text-[10px] text-gray-400 uppercase">{key}</span>}
+                const displayVal = getValueLabel(key, value);
+                const isZero = value === 0 || value === "0";
+
+                return (
+                  <div
+                    key={key}
+                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-all group border-b border-gray-200 last:border-0 hover:bg-gray-50/50 ${
+                      isZero ? "opacity-60 grayscale-[0.3]" : ""
+                    }`}
+                  >
+                    <div className="flex-grow min-w-0 mr-4 mb-2 sm:mb-0">
+                      <div className="text-[10px] font-bold text-gray-700 leading-tight group-hover:text-indigo-600 transition-colors tracking-tight mb-1" title={label}>
+                        {label}
+                      </div>
+                      <div className="text-[8px] font-mono text-gray-400 uppercase tracking-tighter bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 inline-block">
+                        {key}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className={`text-sm font-black tracking-tight ${isZero ? "text-gray-400" : "text-indigo-900"}`}>
+                        {displayVal}
+                      </div>
+                      {(displayVal !== String(value)) && (
+                        <div className="text-[8px] text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                          {value}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {/* Technical key as tooltip */}
-                  {label !== key && (
-                    <div className="text-[10px] font-mono text-gray-300 uppercase truncate" title={key}>{key}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <span className={`text-xs font-bold text-right ${
-                    isZero ? "text-gray-300" :
-                    hasCategory && displayVal !== String(value) ? text :
-                    "text-gray-700"
-                  }`}>
-                    {displayVal}
-                  </span>
-                  {/* Show original numeric code if category mapped */}
-                  {hasCategory && displayVal !== String(value) && (
-                    <span className="text-[10px] text-gray-300">({String(value)})</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
         {entries.length === 0 && (
-          <div className="p-8 text-center text-gray-400 text-sm">Nenhum campo encontrado.</div>
+          <div className="py-24 flex flex-col items-center justify-center text-gray-300 border-2 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/30">
+            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 border border-gray-100">
+              <HelpCircle size={32} className={`opacity-20 ${accentText}`} />
+            </div>
+            <p className="text-sm font-bold text-gray-400">Nenhum campo encontrado</p>
+            <p className="text-xs text-gray-300 mt-1">Tente ajustar seus termos de busca ou filtros</p>
+            <button 
+              onClick={() => { setRawSearch(""); setShowOnlyNonZero(false); }}
+              className={`mt-6 px-6 py-2 bg-white border border-gray-200 rounded-xl text-[10px] uppercase tracking-widest font-bold ${accentText} hover:bg-gray-50 hover:border-blue-200 transition-all shadow-sm`}
+            >
+              Resetar Filtros
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -454,11 +639,20 @@ function DetailSection({ title, children, className }: { title: string, children
   );
 }
 
-function DetailItem({ label, value, active }: { label: string, value: string | number, active?: boolean }) {
+function DetailItem({ label, value, state }: { label: string, value: string | number, state?: any }) {
+  const isYes = state === 1 || state === "1";
+  const isNo = state === 0 || state === "0";
+  const isNull = state === null || state === undefined || state === "";
+
   return (
-    <div className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-50 transition-colors">
-      <span className="text-sm text-gray-500">{label}</span>
-      <span className={`text-sm font-semibold ${active ? "text-green-600" : active === false ? "text-red-400" : "text-gray-700"}`}>
+    <div className="flex justify-between items-center p-2.5 rounded-xl border border-gray-100 bg-white/50 hover:bg-white transition-all shadow-sm">
+      <span className="text-sm font-medium text-gray-500">{label}</span>
+      <span className={`text-sm font-bold ${
+        isYes ? "text-blue-600" : 
+        isNo ? "text-rose-500" : 
+        isNull && typeof value === 'string' && value.includes("Respondeu") ? "text-gray-400 italic" :
+        "text-gray-800"
+      }`}>
         {value}
       </span>
     </div>
