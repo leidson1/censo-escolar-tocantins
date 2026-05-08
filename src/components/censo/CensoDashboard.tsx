@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, MapPin, School, Wifi, WifiOff, Info, Filter, ArrowUpDown, ExternalLink, Database, HelpCircle, Layout } from "lucide-react";
+import { Search, MapPin, School, Wifi, WifiOff, Info, Filter, ArrowUpDown, ExternalLink, Database, HelpCircle, Layout, UserCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSchoolDetails } from "@/app/censo-2025/actions";
 import { getLabel, getValueLabel, getDictEntry } from "@/lib/censo-dict";
@@ -291,7 +291,7 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                 <th className="p-4 font-semibold text-gray-600 text-sm">Rede</th>
                 <th className="p-4 font-semibold text-gray-600 text-sm">Local</th>
                 <th className="p-4 font-semibold text-gray-600 text-sm">Internet</th>
-                <th className="p-4 font-semibold text-gray-600 text-sm text-center">Ações</th>
+                <th className="p-4 font-semibold text-gray-500 text-xs text-center">Detalhes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -329,9 +329,9 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleShowDetails(school.id)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center gap-1 text-sm"
+                      className="p-1.5 rounded-lg transition-colors inline-flex items-center gap-1 text-xs text-[#0D6E3F] hover:bg-green-50"
                     >
-                      <Info size={16} /> Detalhes
+                      <UserCircle size={15} /> Ver
                     </button>
                   </td>
                 </motion.tr>
@@ -368,9 +368,11 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl relative overflow-hidden flex flex-col"
             >
-              <div className="p-6 bg-gradient-to-r from-[#0D6E3F] to-green-600 text-white flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-bold">{String(selectedSchool.NO_ENTIDADE)}</h2>
+              <div className="p-6 bg-gradient-to-r from-[#0D6E3F] to-green-600 text-white flex justify-between items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight drop-shadow-sm break-words pr-4">
+                    {String(selectedSchool.NO_ENTIDADE)}
+                  </h2>
                   <p className="text-green-100 text-sm flex items-center gap-2">
                     <MapPin size={14} /> {String(selectedSchool.NO_MUNICIPIO)} - TO | INEP: {String(selectedSchool.CO_ENTIDADE)}
                   </p>
@@ -400,7 +402,18 @@ export default function CensoDashboard({ schools, stats }: CensoDashboardProps) 
                 </div>
 
                 {/* Raw Data with Dictionary */}
-                <RawDataSection data={selectedSchool} rawSearch={rawSearch} setRawSearch={setRawSearch} accentColor="indigo" />
+                <RawDataSection 
+                  data={selectedSchool} 
+                  rawSearch={rawSearch} 
+                  setRawSearch={setRawSearch} 
+                  accentColor="indigo" 
+                  excludeKeys={[
+                    "nome", "municipio", "rede", "local", "internet", "salas",
+                    "CO_ENTIDADE", "NO_ENTIDADE", "NO_MUNICIPIO", "TP_DEPENDENCIA", "TP_LOCALIZACAO",
+                    "IN_INTERNET", "IN_BANDA_LARGA", "IN_LABORATORIO_INFORMATICA", "QT_DESKTOP_ALUNO",
+                    "DS_ENDERECO", "NU_ENDERECO", "NO_BAIRRO", "NU_DDD", "NU_TELEFONE"
+                  ]}
+                />
 
                 {/* Address */}
                 <div className="mt-6 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -434,25 +447,45 @@ const PREFIX_LABELS: Record<string, string> = {
   "DS_": "Descrições",
 };
 
-export function RawDataSection({ data, rawSearch, setRawSearch, accentColor = "blue" }: { data: any, rawSearch: string, setRawSearch: (v: string) => void, accentColor?: string }) {
+export function RawDataSection({ 
+  data, 
+  rawSearch, 
+  setRawSearch, 
+  accentColor = "blue",
+  excludeKeys = [] 
+}: { 
+  data: any, 
+  rawSearch: string, 
+  setRawSearch: (v: string) => void, 
+  accentColor?: string,
+  excludeKeys?: string[]
+}) {
   const [showOnlyNonZero, setShowOnlyNonZero] = useState(false);
 
   const entries = useMemo(() => {
     const term = rawSearch.toLowerCase();
+    const exclude = new Set([
+      ...excludeKeys, 
+      "id", "raw_data", "unidade", "municipio", "rede", "local", "localDif", "situacao",
+      "NO_ENTIDADE", "CO_ENTIDADE", "NO_MUNICIPIO", "UNIDADE"
+    ]);
+    
     return Object.entries(data).filter(([key, value]) => {
+      if (exclude.has(key)) return false;
       if (value === null || value === undefined || value === "") return false;
       if (showOnlyNonZero && (value === 0 || value === "0")) return false;
+      
       if (!term) return true;
       const label = getLabel(key).toLowerCase();
       const valStr = getValueLabel(key, value).toLowerCase();
       return key.toLowerCase().includes(term) || label.includes(term) || valStr.includes(term);
     });
-  }, [data, rawSearch, showOnlyNonZero]);
+  }, [data, rawSearch, showOnlyNonZero, excludeKeys]);
 
   const groupedEntries = useMemo(() => {
     const groups: Record<string, [string, any][]> = {};
     entries.forEach(([key, value]) => {
-      const prefix = key.substring(0, 3);
+      const prefix = key.substring(0, 3).toUpperCase();
       const cat = PREFIX_LABELS[prefix] || "Outras Informações";
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push([key, value]);
@@ -507,40 +540,49 @@ export function RawDataSection({ data, rawSearch, setRawSearch, accentColor = "b
         </div>
       </div>
 
-      <div className="space-y-10">
+      <div className="space-y-8">
         {Object.entries(groupedEntries).sort().map(([category, items]) => (
-          <div key={category} className="space-y-4">
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-3">
-              <span className={`w-8 h-[2px] rounded-full bg-current ${accentText}`}></span>
+          <div key={category} className="space-y-3">
+            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-3 mb-4">
+              <span className={`w-6 h-[1.5px] rounded-full bg-current ${accentText}`}></span>
               {category}
-              <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[9px] font-bold">{items.length}</span>
+              <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[8px] font-bold">{items.length}</span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map(([key, value]) => {
-                const entry = getDictEntry(key);
-                const label = entry?.descricao || key;
+            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+              {items.map(([key, value], idx) => {
+                const entry = getDictEntry(key.toUpperCase());
+                let label = entry?.descricao || key;
+                
+                // If no label was found, format the key nicely
+                if (label === key) {
+                  label = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                }
+
                 const displayVal = getValueLabel(key, value);
                 const isZero = value === 0 || value === "0";
 
                 return (
                   <div
                     key={key}
-                    className={`flex flex-col p-3 rounded-xl transition-all group border border-gray-100 bg-white shadow-sm hover:shadow-md hover:border-indigo-200 text-center ${
-                      isZero ? "opacity-40 grayscale-[0.5]" : ""
+                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-all group border-b border-gray-200 last:border-0 hover:bg-gray-50/50 ${
+                      isZero ? "opacity-60 grayscale-[0.3]" : ""
                     }`}
                   >
-                    <div className="mb-2">
-                      <div className="text-[10px] font-bold text-gray-500 leading-tight group-hover:text-indigo-600 line-clamp-2 min-h-[2.5em]" title={label}>
-                        {label !== key ? label : key}
+                    <div className="flex-grow min-w-0 mr-4 mb-2 sm:mb-0">
+                      <div className="text-[10px] font-bold text-gray-700 leading-tight group-hover:text-indigo-600 transition-colors tracking-tight mb-1" title={label}>
+                        {label}
                       </div>
-                      <div className="text-[8px] font-mono text-gray-300 uppercase mt-1 tracking-tighter" title="Nome técnico da variável">{key}</div>
+                      <div className="text-[8px] font-mono text-gray-400 uppercase tracking-tighter bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 inline-block">
+                        {key}
+                      </div>
                     </div>
-                    <div className="pt-2 border-t border-gray-50 flex flex-col items-center justify-center mt-auto">
-                      <div className={`text-[13px] font-black ${isZero ? "text-gray-400" : "text-indigo-700"} w-full`}>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className={`text-sm font-black tracking-tight ${isZero ? "text-gray-400" : "text-indigo-900"}`}>
                         {displayVal}
                       </div>
                       {(displayVal !== String(value)) && (
-                        <div className="text-[9px] text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded mt-1">
+                        <div className="text-[8px] text-gray-500 font-mono bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
                           {value}
                         </div>
                       )}

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import {
   Search, Users, UserCheck, GraduationCap,
   Briefcase, Award, ChevronDown, ChevronUp, X,
-  UserCircle, BookOpen, BarChart2, MapPin
+  UserCircle, BookOpen, BarChart2, MapPin, HelpCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RawDataSection } from "./CensoDashboard";
@@ -83,6 +83,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
   const [localFilter, setLocalFilter] = useState<number | "all">("all");
   const [localDifFilter, setLocalDifFilter] = useState<number | "all">("all");
   const [municipioFilter, setMunicipioFilter] = useState<string>("all");
+  const [acessoFilter, setAcessoFilter] = useState<string>("all");
   const [selectedGestor, setSelectedGestor] = useState<Gestor | null>(null);
   const [sortField, setSortField] = useState<keyof Gestor>("UNIDADE");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -102,7 +103,23 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
       const matchLocal = localFilter === "all" || Number(g.local) === Number(localFilter);
       const matchLocalDif = localDifFilter === "all" || Number(g.localDif) === Number(localDifFilter);
       const matchMun = municipioFilter === "all" || g.NO_MUNICIPIO === municipioFilter;
-      return matchSearch && matchRede && matchLocal && matchLocalDif && matchMun;
+
+      let matchAcesso = true;
+      if (acessoFilter === "nao_informado") {
+        const sum = (g.QT_GEST_BAS_ACESSO_CARGO_INDIC || 0) + 
+                    (g.QT_GEST_BAS_ACESSO_CARGO_ELEIC || 0) + 
+                    (g.QT_GEST_BAS_ACESSO_CARGO_CONC || 0) + 
+                    (g.QT_GEST_BAS_ACESSO_CARGO_SEL || 0) + 
+                    (g.QT_GEST_BAS_ACESSO_CARGO_PROP || 0) + 
+                    (g.QT_GEST_BAS_ACESSO_CARGO_P_SEL || 0) + 
+                    (g.QT_GEST_BAS_ACESSO_CARGO_OUTRO || 0);
+        matchAcesso = g.QT_GEST_BAS > 0 && sum === 0;
+      } else if (acessoFilter !== "all") {
+        const key = `QT_GEST_BAS_ACESSO_CARGO_${acessoFilter.toUpperCase()}`;
+        matchAcesso = (g[key] || 0) > 0;
+      }
+
+      return matchSearch && matchRede && matchLocal && matchLocalDif && matchMun && matchAcesso;
     });
     list.sort((a, b) => {
       const av = a[sortField] ?? "";
@@ -115,7 +132,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
         : String(bv).localeCompare(String(av));
     });
     return list;
-  }, [gestores, searchTerm, redeFilter, localFilter, localDifFilter, sortField, sortDir]);
+  }, [gestores, searchTerm, municipioFilter, redeFilter, localFilter, localDifFilter, acessoFilter, sortField, sortDir]);
 
   // ── Calculate KPIs based on FILTERED data ──────────────────────────
   const kpis = useMemo(() => {
@@ -157,14 +174,26 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
     };
 
     const pos = {
-      espec: allFilteredGestores.reduce((s, g) => s + (g.QT_GEST_BAS_ESCO_SUP_POS_ESPEC || 0), 0),
-      mestra: allFilteredGestores.reduce((s, g) => s + (g.QT_GEST_BAS_ESCO_SUP_POS_MESTRA || 0), 0),
-      douto: allFilteredGestores.reduce((s, g) => s + (g.QT_GEST_BAS_ESCO_SUP_POS_DOUTO || 0), 0),
-      nenhum: allFilteredGestores.reduce((s, g) => s + (g.QT_GEST_BAS_ESCO_SUP_POS_NENHUM || 0), 0),
+      espec: allFilteredGestores.reduce((s, g) => s + (Number(g.QT_GEST_BAS_ESCO_SUP_POS_ESPEC) || 0), 0),
+      mestra: allFilteredGestores.reduce((s, g) => s + (Number(g.QT_GEST_BAS_ESCO_SUP_POS_MESTRA) || 0), 0),
+      douto: allFilteredGestores.reduce((s, g) => s + (Number(g.QT_GEST_BAS_ESCO_SUP_POS_DOUTO) || 0), 0),
+      nenhum: allFilteredGestores.reduce((s, g) => s + (Number(g.QT_GEST_BAS_ESCO_SUP_POS_NENHUM) || 0), 0),
     };
 
-    const posSum = pos.espec + pos.mestra + pos.douto + pos.nenhum;
-    const posNotInform = total - posSum;
+    // Calculate "Não Informado" correctly for independent fields:
+    // A gestor is "Not Informed" if they exist (QT_GEST_BAS > 0) but ALL post-grad flags are 0.
+    const posNotInform = allFilteredGestores.reduce((acc, g) => {
+      const hasAnyInfo = (Number(g.QT_GEST_BAS_ESCO_SUP_POS_ESPEC) || 0) > 0 ||
+                         (Number(g.QT_GEST_BAS_ESCO_SUP_POS_MESTRA) || 0) > 0 ||
+                         (Number(g.QT_GEST_BAS_ESCO_SUP_POS_DOUTO) || 0) > 0 ||
+                         (Number(g.QT_GEST_BAS_ESCO_SUP_POS_NENHUM) || 0) > 0;
+      
+      // If the school has gestores but none have any post-grad info recorded
+      if (!hasAnyInfo && (Number(g.QT_GEST_BAS) || 0) > 0) {
+        return acc + (Number(g.QT_GEST_BAS) || 0);
+      }
+      return acc;
+    }, 0);
 
     return { total, fem, masc, grad, mestrado, doutorado, pcd, escolas, federais, estaduais, municipais, privadas, access: { ...access, notInform }, edu, pos: { ...pos, notInform: posNotInform } };
   }, [allFilteredGestores]);
@@ -203,11 +232,11 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
       </div>
 
       {/* ── Stats Charts Row ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Acesso ao cargo */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
-            <Award size={14} /> Acesso ao Cargo
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+            <Award size={14} className="text-indigo-500" /> Acesso ao Cargo (Provimento)
           </h3>
           <div className="space-y-4">
             <MiniBar label="Indicação" tooltip={getLabel("QT_GEST_BAS_ACESSO_CARGO_INDIC")} value={kpis.access.indic} total={kpis.total} color="bg-amber-400" />
@@ -217,40 +246,80 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
             <MiniBar label="Eleição" tooltip={getLabel("QT_GEST_BAS_ACESSO_CARGO_ELEIC")} value={kpis.access.eleic} total={kpis.total} color="bg-green-500" />
             <MiniBar label="Proprietário" tooltip={getLabel("QT_GEST_BAS_ACESSO_CARGO_PROP")} value={kpis.access.prop} total={kpis.total} color="bg-emerald-500" />
             <MiniBar label="Outro" tooltip={getLabel("QT_GEST_BAS_ACESSO_CARGO_OUTRO")} value={kpis.access.outro} total={kpis.total} color="bg-gray-400" />
-            <MiniBar label="Não Informado" tooltip="Gestores sem informação de acesso ao cargo registrada" value={kpis.access.notInform} total={kpis.total} color="bg-gray-200" />
+            <div className="pt-2 border-t border-gray-50">
+              <MiniBar label="Não Informado" tooltip="Gestores sem informação de acesso ao cargo registrada" value={kpis.access.notInform} total={kpis.total} color="bg-gray-200" />
+            </div>
           </div>
         </div>
 
-        {/* Escolaridade */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
-            <BookOpen size={14} /> Escolaridade
+        {/* Escolaridade Básica */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+            <BookOpen size={14} className="text-indigo-500" /> Escolaridade (Nível Mais Alto)
           </h3>
           <div className="space-y-4">
-            <MiniBar label="Graduação" value={kpis.edu.graduacao} total={kpis.total} color="bg-indigo-500" />
+            <MiniBar label="Graduação" value={kpis.edu.graduacao} total={kpis.total} color="bg-indigo-600" />
             <MiniBar label="Licenciatura" tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_GRAD_LICEN")} value={kpis.edu.licenciatura} total={kpis.total} color="bg-indigo-400" />
             <MiniBar label="Ens. Médio" value={kpis.edu.medio} total={kpis.total} color="bg-blue-400" />
             <MiniBar label="Ens. Fundamental" value={kpis.edu.fundamental} total={kpis.total} color="bg-blue-300" />
           </div>
         </div>
+      </div>
 
-        {/* Pós-Graduação */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
-            <Award size={14} /> Pós-Graduação
-          </h3>
-          <div className="space-y-4">
-            <MiniBar label="Especialização" tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_ESPEC")} value={kpis.pos.espec} total={kpis.total} color="bg-purple-400" />
-            <MiniBar label="Mestrado" tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_MESTRA")} value={kpis.pos.mestra} total={kpis.total} color="bg-purple-500" />
-            <MiniBar label="Doutorado" tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_DOUTO")} value={kpis.pos.douto} total={kpis.total} color="bg-purple-600" />
-            <div className="pt-2 mt-2 border-t border-gray-50">
-              <MiniBar label="Pós não Concluída" tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_NENHUM")} value={kpis.pos.nenhum} total={kpis.total} color="bg-gray-200" />
-              <MiniBar label="Não Informado" tooltip="Gestores sem informação de pós-graduação registrada" value={kpis.pos.notInform} total={kpis.total} color="bg-gray-100" />
-            </div>
+      {/* ── Pós-Graduação (Independent Metrics Section) ── */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-800 flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-purple-600 rounded-full" />
+              Pós-Graduação
+            </h3>
+            <p className="text-xs text-gray-400 mt-1">Indicadores independentes calculados sobre o total de {kpis.total} gestores</p>
+          </div>
+          <div className="px-4 py-2 bg-purple-50 rounded-full text-[10px] font-bold text-purple-600 uppercase tracking-widest border border-purple-100">
+            Dados por Independência de Campo
           </div>
         </div>
 
-        {/* Diversidade - REMOVED PER USER REQUEST */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <PosGradCard
+            label="Especialização"
+            value={kpis.pos.espec}
+            total={kpis.total}
+            color="purple"
+            tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_ESPEC")}
+          />
+          <PosGradCard
+            label="Mestrado"
+            value={kpis.pos.mestra}
+            total={kpis.total}
+            color="indigo"
+            tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_MESTRA")}
+          />
+          <PosGradCard
+            label="Doutorado"
+            value={kpis.pos.douto}
+            total={kpis.total}
+            color="violet"
+            tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_DOUTO")}
+          />
+          <PosGradCard
+            label="Pós não Concluída"
+            value={kpis.pos.nenhum}
+            total={kpis.total}
+            color="gray"
+            tooltip={getLabel("QT_GEST_BAS_ESCO_SUP_POS_NENHUM")}
+          />
+        </div>
+
+        {kpis.pos.notInform > 0 && (
+          <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-center">
+            <div className="flex items-center gap-3 text-gray-400 text-xs">
+              <div className="w-2 h-2 rounded-full bg-gray-200" />
+              <span>Gestores sem informação de pós-graduação: <span className="font-bold text-gray-600">{kpis.pos.notInform} ({pct(kpis.pos.notInform, kpis.total)})</span></span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Search & Filters ── */}
@@ -310,7 +379,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Local Filter */}
           <div className="md:col-span-1">
             <label className="text-sm font-medium text-gray-500 mb-2 block">Localização</label>
@@ -342,6 +411,29 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
                 {Object.entries(LOCAL_DIF_LABELS).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
                 ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+            </div>
+          </div>
+
+          {/* Acesso ao Cargo Filter */}
+          <div className="md:col-span-1">
+            <label className="text-sm font-medium text-gray-500 mb-2 block">Acesso ao Cargo</label>
+            <div className="relative">
+              <select
+                className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none transition-all text-sm bg-white"
+                value={acessoFilter}
+                onChange={e => setAcessoFilter(e.target.value)}
+              >
+                <option value="all">Todos os acessos</option>
+                <option value="indic">Indicação</option>
+                <option value="eleic">Eleição</option>
+                <option value="conc">Concurso</option>
+                <option value="sel">Seleção</option>
+                <option value="prop">Proprietário</option>
+                <option value="p_sel">Proc. Seletivo</option>
+                <option value="outro">Outro</option>
+                <option value="nao_informado">Não Informado</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
             </div>
@@ -417,7 +509,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
                 <SortTh label="Fem / Masc" field="QT_GEST_BAS_FEM" current={sortField} dir={sortDir} onSort={toggleSort} />
                 <SortTh label="Graduação" field="QT_GEST_BAS_ESCO_SUP_GRAD" current={sortField} dir={sortDir} onSort={toggleSort} />
                 <SortTh label="Acesso" field="QT_GEST_BAS_ACESSO_CARGO_INDIC" current={sortField} dir={sortDir} onSort={toggleSort} />
-                <th className="p-4 font-semibold text-gray-600 text-center">Detalhes</th>
+                <th className="p-4 text-gray-500 font-semibold text-xs text-center">Detalhes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -461,7 +553,7 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
                   <td className="p-4 text-center">
                     <button
                       onClick={() => setSelectedGestor(g)}
-                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center gap-1 text-xs"
+                      className="p-1.5 rounded-lg transition-colors inline-flex items-center gap-1 text-xs text-[#0D6E3F] hover:bg-green-50"
                     >
                       <UserCircle size={15} /> Ver
                     </button>
@@ -507,20 +599,26 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
                    <Users size={120} />
                 </div>
 
-                <div className="relative z-10 flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-black tracking-tight leading-none drop-shadow-sm">{selectedGestor.UNIDADE}</h2>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-white/80 text-xs font-semibold uppercase tracking-wider">
-                      <span className="flex items-center gap-1.5"><MapPin size={14} /> Tocantins</span>
-                      <span className="w-1 h-1 bg-white/30 rounded-full"></span>
-                      <span>INEP: {selectedGestor.CO_ENTIDADE}</span>
-                      <span className="w-1 h-1 bg-white/30 rounded-full"></span>
-                      <span>Censo {selectedGestor.NU_ANO_CENSO}</span>
+                <div className="relative z-10 flex justify-between items-start gap-4">
+                  <div className="flex-grow min-w-0">
+                    <h2 className="text-xl md:text-2xl font-black tracking-tight leading-[1.1] drop-shadow-sm break-words uppercase">
+                      {selectedGestor.UNIDADE}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-4">
+                      <span className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm border border-white/10">
+                        <MapPin size={12} /> {selectedGestor.NO_MUNICIPIO || "Tocantins"}
+                      </span>
+                      <span className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm border border-white/10">
+                        INEP: {selectedGestor.CO_ENTIDADE}
+                      </span>
+                      <span className="flex items-center gap-1.5 px-2 py-1 bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm border border-white/10">
+                        Censo {selectedGestor.NU_ANO_CENSO}
+                      </span>
                     </div>
                   </div>
                   <button 
                     onClick={() => setSelectedGestor(null)} 
-                    className="p-2.5 bg-white/10 hover:bg-white/20 rounded-2xl backdrop-blur-md transition-all border border-white/10 group"
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-md transition-all border border-white/10 group flex-shrink-0"
                   >
                     <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                   </button>
@@ -603,7 +701,23 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
 
                 {/* ── Dados Brutos com Dicionário ── */}
                 <div className="pt-8 border-t border-gray-100">
-                  <RawDataSection data={selectedGestor} rawSearch={searchTerm} setRawSearch={setSearchTerm} accentColor="indigo" />
+                  <RawDataSection 
+                    data={selectedGestor} 
+                    rawSearch={searchTerm} 
+                    setRawSearch={setSearchTerm} 
+                    accentColor="indigo" 
+                    excludeKeys={[
+                      "UNIDADE", "NO_ENTIDADE", "CO_ENTIDADE", "NO_MUNICIPIO", "NU_ANO_CENSO",
+                      "QT_GEST_BAS", "QT_GEST_BAS_FEM", "QT_GEST_BAS_MASC", "QT_GEST_BAS_PCD",
+                      "QT_GEST_BAS_BRANCA", "QT_GEST_BAS_PRETA", "QT_GEST_BAS_PARDA", "QT_GEST_BAS_AMARELA", "QT_GEST_BAS_INDIGENA",
+                      "QT_GEST_BAS_0_24", "QT_GEST_BAS_25_29", "QT_GEST_BAS_30_39", "QT_GEST_BAS_40_49", "QT_GEST_BAS_50_54", "QT_GEST_BAS_55_59", "QT_GEST_BAS_60_MAIS",
+                      "QT_GEST_BAS_ESCO_EF", "QT_GEST_BAS_ESCO_EM", "QT_GEST_BAS_ESCO_SUP_GRAD", "QT_GEST_BAS_ESCO_SUP_GRAD_LICEN",
+                      "QT_GEST_BAS_ESCO_SUP_POS_ESPEC", "QT_GEST_BAS_ESCO_SUP_POS_MESTRA", "QT_GEST_BAS_ESCO_SUP_POS_DOUTO",
+                      "QT_GEST_BAS_ACESSO_CARGO_INDIC", "QT_GEST_BAS_ACESSO_CARGO_ELEIC", "QT_GEST_BAS_ACESSO_CARGO_SEL", "QT_GEST_BAS_ACESSO_CARGO_CONC", "QT_GEST_BAS_ACESSO_CARGO_PROP", "QT_GEST_BAS_ACESSO_CARGO_P_SEL", "QT_GEST_BAS_ACESSO_CARGO_OUTRO",
+                      "QT_GEST_BAS_VINCULO_CONCUR", "QT_GEST_BAS_VINCULO_CONTRA", "QT_GEST_BAS_DIRETOR", "QT_GEST_BAS_OUTRO",
+                      "QT_GEST_BAS_ESPEC_GESTAO", "QT_GEST_BAS_ESPEC_EDUC_TIC", "QT_GEST_BAS_ESPEC_NENHUM"
+                    ]}
+                  />
                 </div>
               </div>
             </motion.div>
@@ -615,6 +729,68 @@ export default function GestoresDashboard({ gestores }: GestoresDashboardProps) 
 }
 
 // ── Sub-components ────────────────────────────────────────────────────
+
+function PosGradCard({ label, value, total, color, tooltip }: { label: string; value: number; total: number; color: string; tooltip?: string }) {
+  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+  
+  const colors: Record<string, string> = {
+    purple: "text-purple-600 bg-purple-50",
+    indigo: "text-indigo-600 bg-indigo-50",
+    violet: "text-violet-600 bg-violet-50",
+    gray: "text-gray-600 bg-gray-50",
+  };
+
+  const barColors: Record<string, string> = {
+    purple: "bg-purple-500",
+    indigo: "bg-indigo-500",
+    violet: "bg-violet-500",
+    gray: "bg-gray-400",
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-1 h-full bg-current opacity-20" />
+      
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-2 rounded-lg ${colors[color] ?? colors.gray}`}>
+          <Award size={18} />
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-2xl font-black text-gray-800 tracking-tight">{value}</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gestores</span>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex justify-between items-end">
+          <h4 className="text-xs font-bold text-gray-500 group-hover:text-gray-900 transition-colors">{label}</h4>
+          <span className={`text-lg font-black ${colors[color]?.split(" ")[0]}`}>{percentage}%</span>
+        </div>
+        
+        <div className="w-full bg-gray-50 rounded-full h-2 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className={`h-full rounded-full ${barColors[color] ?? barColors.gray} shadow-[0_0_8px_rgba(0,0,0,0.1)]`}
+          />
+        </div>
+      </div>
+
+      {tooltip && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative cursor-help">
+            <HelpCircle size={14} className="text-gray-300 hover:text-gray-500" />
+            <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-gray-800 text-white text-[9px] rounded-lg pointer-events-none z-50 shadow-xl leading-relaxed">
+              {tooltip}
+              <div className="absolute top-full right-2 border-4 border-transparent border-t-gray-800" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function KpiCard({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode; color: string }) {
   return (
