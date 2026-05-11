@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Censo Escolar - Secretaria da Educação - Governo do Tocantins",
 };
 
+import { CensoProvider } from "@/context/CensoContext";
+import HomeRedirect from "@/components/layout/HomeRedirect";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -15,7 +18,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="antialiased min-h-screen flex flex-col" suppressHydrationWarning>
-        {children}
+        <CensoProvider>
+          <HomeRedirect />
+          {children}
+        </CensoProvider>
       </body>
     </html>
   );
