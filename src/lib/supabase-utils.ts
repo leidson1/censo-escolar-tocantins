@@ -17,10 +17,12 @@ export async function fetchAllRows<T = Record<string, unknown>>(
   let hasMore = true;
 
   while (hasMore) {
+    // Clone or ensure we are calling range on the base query correctly
+    // In Postgrest-js, range() returns a new builder instance
     const { data, error } = await query.range(from, to);
 
     if (error) {
-      console.error('Error in fetchAllRows:', error);
+      console.error('Error in fetchAllRows:', JSON.stringify(error, null, 2));
       throw error;
     }
 
