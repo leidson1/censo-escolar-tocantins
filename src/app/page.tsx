@@ -1,7 +1,7 @@
 "use client";
 
 import MainLayout from "@/components/layout/MainLayout";
-import { ArrowRight, BookOpen, UserCheck, BarChart, GraduationCap, School } from "lucide-react";
+import { ArrowRight, BookOpen, UserCheck, BarChart, GraduationCap, School, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
 
@@ -114,6 +114,38 @@ export default function Home() {
           </p>
           <Link href="/censo-2025" className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1">
             Acessar Dados <ArrowRight size={14} />
+          </Link>
+        </motion.div>
+
+        {/* Card: Análise de Rendimento */}
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-indigo-100 p-3 rounded-lg text-indigo-700">
+              <BarChart size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800">Rendimento Escolar</h3>
+          </div>
+          <p className="text-gray-600 mb-4">
+            Análise histórica das taxas de aprovação, reprovação e abandono do Tocantins (2022-2024).
+          </p>
+          <Link href="/analise-rendimento" className="text-indigo-700 font-semibold hover:underline text-sm flex items-center gap-1">
+            Ver Análise Histórica <ArrowRight size={14} />
+          </Link>
+        </motion.div>
+
+        {/* Card: Taxa de Não Resposta */}
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-amber-100 p-3 rounded-lg text-amber-600">
+              <ShieldAlert size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800">Taxa de Não Resposta</h3>
+          </div>
+          <p className="text-gray-600 mb-4">
+            Análise do percentual de alunos sem situação de rendimento declarada — Ensino Fundamental e Médio (2022–2024).
+          </p>
+          <Link href="/analise-tnr" className="text-amber-600 font-semibold hover:underline text-sm flex items-center gap-1">
+            Ver Análise <ArrowRight size={14} />
           </Link>
         </motion.div>
 
