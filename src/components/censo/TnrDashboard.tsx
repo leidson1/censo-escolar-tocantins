@@ -415,7 +415,7 @@ export default function TnrDashboard() {
               </span>{" "}
               média nacional ({brVal != null ? Number(brVal).toFixed(1) : "N/A"}%)
               {Math.abs(diffBr!) >= 0.01 && ` — diferença de ${Math.abs(Number(diffBr)).toFixed(1)} p.p.`}
-              {regVal != null && `, e ${Number(toVal).toFixed(1) < Number(regVal) ? "inferior" : Number(toVal).toFixed(1) > Number(regVal) ? "superior" : "igual"} à Região ${regiaoComparacao} (${Number(regVal).toFixed(1)}%).`}
+              {regVal != null && `, e ${Number(toVal) < Number(regVal) ? "inferior" : Number(toVal) > Number(regVal) ? "superior" : "igual"} à Região ${regiaoComparacao} (${Number(regVal).toFixed(1)}%).`}
             </div>
           )}
         </motion.div>

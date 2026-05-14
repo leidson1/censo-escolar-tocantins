@@ -36,6 +36,8 @@ interface RendimentoData {
   valor: number;
   localizacao: string;
   dependencia_administrativa: string;
+  nome_da_regiao_geografica?: string | null;
+  nome_da_unidade_federativa?: string | null;
 }
 
 export default function RendimentoDashboard() {
@@ -523,7 +525,7 @@ export default function RendimentoDashboard() {
                 {["Brasil", `Região ${regiaoComparacao}`, "Tocantins"].map((scope) => {
                   const val = comparativeData[scope][type];
                   const maxScale = type === "aprovacao" ? 100 : 20;
-                  const height = val > 0 ? Math.min(100, Math.max(4, (val / maxScale) * 100)) : 0;
+                  const height = (val || 0) > 0 ? Math.min(100, Math.max(4, (val! / maxScale) * 100)) : 0;
                   
                   // Vibrant Color Palette
                   let color = "";
