@@ -269,6 +269,18 @@ export default function SegundaEtapa() {
                     </h3>
                     <p className="text-gray-600">Altera a Portaria Nº 239/2025 — atualização das normas do Censo 2025.</p>
                 </a>
+
+                <a
+                    href="https://www.in.gov.br/web/dou/-/portaria-n-217-de-11-de-maio-de-2026-706313859"
+                    target="_blank"
+                    className="flex-1 min-w-[260px] bg-white rounded-lg shadow-sm p-6 text-center hover:-translate-y-1 transition-transform border border-gray-100 group"
+                >
+                    <Image src="/imagens/Portaria.png" alt="Portaria 217" width={80} height={80} className="mx-auto h-[90px] w-auto mb-4 group-hover:scale-105 transition-transform" />
+                    <h3 className="text-[#0D6E3F] font-bold text-lg uppercase mb-3 text-wrap overflow-hidden hover:underline">
+                        PORTARIA Nº 217/2026
+                    </h3>
+                    <p className="text-gray-600">Portaria de 11 de maio de 2026 — normas complementares do Censo Escolar 2025.</p>
+                </a>
             </div>
 
             {/* Diagnóstico */}
