@@ -4,8 +4,26 @@ import MainLayout from "@/components/layout/MainLayout";
 import { motion, Variants } from "framer-motion";
 import { ExternalLink, BarChart3, Users, School, GraduationCap, FileBarChart } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import AccessCodeModal from "@/components/censo/AccessCodeModal";
 
 export default function Paineis() {
+    const [tdiModalOpen, setTdiModalOpen] = useState(false);
+    const [pendingLink, setPendingLink] = useState("");
+
+    const openTdiModal = (link: string) => {
+        setPendingLink(link);
+        setTdiModalOpen(true);
+    };
+
+    const handleTdiSuccess = () => {
+        setTdiModalOpen(false);
+        const newWin = window.open(pendingLink, "_blank", "noopener,noreferrer");
+        if (!newWin || newWin.closed || typeof newWin.closed === "undefined") {
+            window.location.href = pendingLink;
+        }
+    };
+
     const containerVariants: Variants = {
         hidden: { opacity: 0 },
         visible: {
@@ -80,6 +98,12 @@ export default function Paineis() {
 
     return (
         <MainLayout title="Gerência de Estatística e Censo Escolar">
+            <AccessCodeModal
+                isOpen={tdiModalOpen}
+                resourceName="o painel TDI"
+                onClose={() => setTdiModalOpen(false)}
+                onSuccess={handleTdiSuccess}
+            />
             {/* Header */}
             <div className="text-center bg-[#0D6E3F] text-white py-6 mb-10 shadow-md rounded-lg -mt-4">
                 <h2 className="m-0 font-bold text-2xl md:text-3xl">PAINÉIS DE RESULTADOS</h2>
@@ -115,17 +139,7 @@ export default function Paineis() {
                             onClick={(e) => {
                                 if (painel.titulo === "TDI") {
                                     e.preventDefault();
-                                    const code = window.prompt("Por favor, insira o código de acesso:");
-                                    if (code === "@censo@123645") {
-                                        // Attempt to open in new tab
-                                        const newWin = window.open(painel.link, "_blank", "noopener,noreferrer");
-                                        // If blocked by popup blocker, redirect in same tab
-                                        if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-                                            window.location.href = painel.link;
-                                        }
-                                    } else if (code !== null) {
-                                        window.alert("Código incorreto!");
-                                    }
+                                    openTdiModal(painel.link);
                                 }
                             }}
                             variants={itemVariants}

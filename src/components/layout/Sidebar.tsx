@@ -4,6 +4,8 @@ import { motion, AnimatePresence, Variants } from "framer-motion";
 import { X, ChevronDown, FileText, ExternalLink, Home, BookOpen, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import AccessCodeModal from "@/components/censo/AccessCodeModal";
 
 interface SidebarProps {
     isOpen: boolean;
@@ -11,7 +13,19 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+    const router = useRouter();
     const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+    const [paineiModalOpen, setPaineiModalOpen] = useState(false);
+
+    const handlePaineisClick = () => {
+        onClose();
+        setPaineiModalOpen(true);
+    };
+
+    const handlePaineisSuccess = () => {
+        setPaineiModalOpen(false);
+        router.push("/paineis");
+    };
 
     const toggleSubmenu = (id: string) => {
         setOpenSubmenu(openSubmenu === id ? null : id);
@@ -28,6 +42,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
 
     return (
+        <>
         <AnimatePresence>
             {isOpen && (
                 <>
@@ -77,10 +92,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 <span className="font-medium">Censo Escolar 2025</span>
                             </Link>
 
-                            <Link href="/paineis" onClick={onClose} className="flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors">
+                            <button
+                                onClick={handlePaineisClick}
+                                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors"
+                            >
                                 <BarChart3 size={20} />
                                 <span className="font-medium">Painéis de Resultados</span>
-                            </Link>
+                            </button>
 
                             <div className="h-px bg-gray-100 my-2"></div>
 
@@ -131,5 +149,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </>
             )}
         </AnimatePresence>
+
+        <AccessCodeModal
+            isOpen={paineiModalOpen}
+            resourceName="Painéis de Resultados"
+            onClose={() => setPaineiModalOpen(false)}
+            onSuccess={handlePaineisSuccess}
+        />
+        </>
     );
 }
