@@ -4,8 +4,29 @@ import MainLayout from "@/components/layout/MainLayout";
 import { ArrowRight, BookOpen, UserCheck, BarChart, GraduationCap, School, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import AccessCodeModal from "@/components/censo/AccessCodeModal";
 
 export default function Home() {
+  const router = useRouter();
+  const [modal, setModal] = useState<{ open: boolean; href: string; name: string }>({
+    open: false,
+    href: "",
+    name: "",
+  });
+
+  const openModal = (href: string, name: string) =>
+    setModal({ open: true, href, name });
+
+  const closeModal = () =>
+    setModal((m) => ({ ...m, open: false }));
+
+  const handleSuccess = () => {
+    closeModal();
+    router.push(modal.href);
+  };
+
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
@@ -21,6 +42,12 @@ export default function Home() {
 
   return (
     <MainLayout title="Gerência de Estatística e Censo Escolar">
+      <AccessCodeModal
+        isOpen={modal.open}
+        resourceName={modal.name}
+        onClose={closeModal}
+        onSuccess={handleSuccess}
+      />
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
@@ -96,9 +123,9 @@ export default function Home() {
           <p className="text-gray-600 mb-4">
             Acesse os painéis com indicadores educacionais, taxas de rendimento e dados estatísticos do Censo Escolar.
           </p>
-          <a href="/paineis" className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1">
+          <button onClick={() => openModal("/paineis", "Painéis de Resultados")} className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1 cursor-pointer">
             Acessar Painéis <ArrowRight size={14} />
-          </a>
+          </button>
         </motion.div>
 
         {/* Card: Censo Escolar 2025 */}
@@ -112,9 +139,9 @@ export default function Home() {
           <p className="text-gray-600 mb-4">
             Consulte os dados detalhados das escolas, infraestrutura e recursos coletados no Censo Escolar 2025.
           </p>
-          <Link href="/censo-2025" className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1">
+          <button onClick={() => openModal("/censo-2025", "os dados do Censo Escolar 2025")} className="text-[#0D6E3F] font-semibold hover:underline text-sm flex items-center gap-1 cursor-pointer">
             Acessar Dados <ArrowRight size={14} />
-          </Link>
+          </button>
         </motion.div>
 
         {/* Card: Análise de Rendimento */}
@@ -128,9 +155,9 @@ export default function Home() {
           <p className="text-gray-600 mb-4">
             Análise histórica das taxas de aprovação, reprovação e abandono do Tocantins (2022-2024).
           </p>
-          <Link href="/analise-rendimento" className="text-indigo-700 font-semibold hover:underline text-sm flex items-center gap-1">
+          <button onClick={() => openModal("/analise-rendimento", "Rendimento Escolar")} className="text-indigo-700 font-semibold hover:underline text-sm flex items-center gap-1 cursor-pointer">
             Ver Análise Histórica <ArrowRight size={14} />
-          </Link>
+          </button>
         </motion.div>
 
         {/* Card: Taxa de Não Resposta */}
@@ -144,9 +171,9 @@ export default function Home() {
           <p className="text-gray-600 mb-4">
             Análise do percentual de alunos sem situação de rendimento declarada — Ensino Fundamental e Médio (2022–2024).
           </p>
-          <Link href="/analise-tnr" className="text-amber-600 font-semibold hover:underline text-sm flex items-center gap-1">
+          <button onClick={() => openModal("/analise-tnr", "Taxa de Não Resposta")} className="text-amber-600 font-semibold hover:underline text-sm flex items-center gap-1 cursor-pointer">
             Ver Análise <ArrowRight size={14} />
-          </Link>
+          </button>
         </motion.div>
 
         {/* Card: Responsabilidades */}

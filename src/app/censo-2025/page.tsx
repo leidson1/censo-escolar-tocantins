@@ -1,6 +1,7 @@
 import MainLayout from "@/components/layout/MainLayout";
 import CensoDictionary from "@/components/censo/CensoDictionary";
 import CensoDataLoader from "@/components/censo/CensoDataLoader";
+import CensoAccessGate from "@/components/censo/CensoAccessGate";
 
 export const metadata = {
   title: "Censo Escolar 2025 | Portal Censo Escolar Tocantins",
@@ -9,19 +10,21 @@ export const metadata = {
 
 export default function Censo2025Page() {
   return (
-    <MainLayout title="Dados do Censo Escolar 2025">
-      <div className="mb-8">
-        <h1 className="text-4xl font-extrabold text-gray-800 mb-2">Painel do Censo Escolar 2025</h1>
-        <p className="text-gray-500">
-          Consulte informações completas de escolas, gestores, docentes, matrículas, turmas e cursos técnicos
-          das unidades escolares do Tocantins.
-        </p>
-      </div>
+    <CensoAccessGate>
+      <MainLayout title="Dados do Censo Escolar 2025">
+        <div className="mb-8">
+          <h1 className="text-4xl font-extrabold text-gray-800 mb-2">Painel do Censo Escolar 2025</h1>
+          <p className="text-gray-500">
+            Consulte informações completas de escolas, gestores, docentes, matrículas, turmas e cursos técnicos
+            das unidades escolares do Tocantins.
+          </p>
+        </div>
 
-      <CensoDataLoader />
+        <CensoDataLoader />
 
-      {/* Floating Dictionary Button */}
-      <CensoDictionary />
-    </MainLayout>
+        {/* Floating Dictionary Button */}
+        <CensoDictionary />
+      </MainLayout>
+    </CensoAccessGate>
   );
 }
