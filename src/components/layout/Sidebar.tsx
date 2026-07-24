@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { X, ChevronDown, FileText, ExternalLink, Home, BookOpen, BarChart3 } from "lucide-react";
+import { X, ChevronDown, FileText, ExternalLink, Home, BookOpen, BarChart3, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -94,11 +94,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                             <button
                                 onClick={handlePaineisClick}
-                                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors"
+                                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors cursor-pointer"
                             >
                                 <BarChart3 size={20} />
                                 <span className="font-medium">Painéis de Resultados</span>
                             </button>
+
+                            <Link href="/diarias" onClick={onClose} className="flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-[#0D6E3F] transition-colors">
+                                <DollarSign size={20} />
+                                <span className="font-medium">Lançamento de Diárias</span>
+                            </Link>
 
                             <div className="h-px bg-gray-100 my-2"></div>
 
