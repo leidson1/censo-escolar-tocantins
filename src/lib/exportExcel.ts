@@ -1,5 +1,16 @@
 import ExcelJS from 'exceljs';
 
+interface Escola {
+  codigo_escola: number;
+  codigo_municipio: number;
+  sre: string;
+  municipio: string;
+  escola: string;
+  localizacao: string;
+  dependencia: string;
+  etapas?: string[];
+}
+
 interface DiarioEntry {
   id: string;
   destino: string;
@@ -15,6 +26,7 @@ interface DiarioEntry {
     nome: string;
     regional: string;
   };
+  escolas?: Escola[];
 }
 
 // ─── Palette ───────────────────────────────────────────────────────────────────
@@ -81,8 +93,19 @@ function fmtDate(d: string): string {
   return new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
+export interface ExportRelatoriosOptions {
+  incluirDiarias?: boolean;
+  incluirEscolas?: boolean;
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export async function exportDiariasToExcel(data: DiarioEntry[]) {
+export async function exportDiariasToExcel(
+  data: DiarioEntry[],
+  options: ExportRelatoriosOptions = {}
+) {
+  const { incluirDiarias = true, incluirEscolas = true } = options;
+  if (!incluirDiarias && !incluirEscolas) return;
+
   const now = new Date();
   const mesAno = now
     .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -92,6 +115,7 @@ export async function exportDiariasToExcel(data: DiarioEntry[]) {
   wb.creator = 'SEDUC/TO – Censo Escolar';
   wb.created  = now;
 
+  if (incluirDiarias) {
   const ws = wb.addWorksheet('Diárias', {
     views: [{ showGridLines: false }],
     pageSetup: {
@@ -365,6 +389,84 @@ export async function exportDiariasToExcel(data: DiarioEntry[]) {
   tVal.value = fmtCur(grandVal);
   fnt(tVal, { bold: true, size: 11, color: C.NAVY }); al(tVal, 'right', 'middle');
   f(tVal, C.GRAND_BG); b(tVal, 'medium');
+  } // incluirDiarias
+
+  // ── SHEET 2: Escolas Monitoradas ─────────────────────────────────────────────
+  if (incluirEscolas) {
+  const wsEsc = wb.addWorksheet('Escolas Monitoradas', {
+    views: [{ showGridLines: false }],
+  });
+
+  wsEsc.columns = [
+    { width: 11 },  // A REGIONAL
+    { width: 26 },  // B TÉCNICO
+    { width: 13 },  // C MAT.
+    { width: 30 },  // D DESTINO
+    { width: 9  },  // E OS
+    { width: 13 },  // F CÓD. INEP
+    { width: 42 },  // G ESCOLA
+    { width: 20 },  // H MUNICÍPIO
+    { width: 12 },  // I SRE
+    { width: 12 },  // J LOCALIZAÇÃO
+    { width: 14 },  // K DEPENDÊNCIA
+    { width: 40 },  // L ETAPAS MONITORADAS
+  ];
+
+  wsEsc.getRow(1).height = 24;
+  const escHdrs = [
+    'REGIONAL', 'TÉCNICO', 'MAT.', 'DESTINO', 'OS',
+    'CÓD. INEP', 'ESCOLA', 'MUNICÍPIO', 'SRE', 'LOCALIZAÇÃO', 'DEPENDÊNCIA', 'ETAPAS MONITORADAS',
+  ];
+  escHdrs.forEach((h, i) => {
+    const c = wsEsc.getRow(1).getCell(i + 1);
+    c.value = h;
+    fnt(c, { bold: true, size: 9, color: C.WHITE });
+    al(c, 'center', 'middle', true);
+    f(c, C.COL_HDR_BG); b(c, 'medium');
+  });
+
+  let escRow = 2;
+  data.forEach((entry) => {
+    (entry.escolas || []).forEach((esc) => {
+      const rn = escRow;
+      wsEsc.getRow(rn).height = 16;
+      const rowBg = escRow % 2 === 0 ? C.ROW_A : C.ROW_B;
+
+      const values = [
+        entry.tecnicos.regional,
+        entry.tecnicos.nome,
+        entry.tecnicos.matricula,
+        entry.destino,
+        entry.ordem_servico || '—',
+        esc.codigo_escola,
+        esc.escola,
+        esc.municipio,
+        esc.sre,
+        esc.localizacao,
+        esc.dependencia,
+        (esc.etapas && esc.etapas.length > 0) ? esc.etapas.join(', ') : '—',
+      ];
+
+      values.forEach((val, i) => {
+        const c = wsEsc.getRow(rn).getCell(i + 1);
+        c.value = val;
+        fnt(c, { size: 9 });
+        al(c, (i === 6 || i === 11) ? 'left' : 'center', 'middle', i === 6 || i === 11);
+        f(c, rowBg); b(c);
+      });
+
+      escRow++;
+    });
+  });
+
+  if (escRow === 2) {
+    const c = wsEsc.getCell('A2');
+    c.value = 'Nenhuma escola monitorada foi vinculada às diárias exportadas.';
+    fnt(c, { italic: true, size: 9, color: 'FF888888' });
+    al(c, 'left', 'middle');
+    wsEsc.mergeCells('A2:L2');
+  }
+  } // incluirEscolas
 
   // ── Download ──────────────────────────────────────────────────────────────────
   const buffer = await wb.xlsx.writeBuffer();
