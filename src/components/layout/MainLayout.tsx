@@ -33,7 +33,7 @@ export default function MainLayout({ children, title = "Gerência de Estatístic
                 </div>
             </div>
 
-            <main className="flex-grow w-full max-w-[1200px] mx-auto px-4 py-8">
+            <main className="flex-grow w-full max-w-[1600px] mx-auto px-3 py-8">
                 {children}
             </main>
 
