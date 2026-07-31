@@ -153,7 +153,7 @@ export default function Home() {
             <h3 className="text-xl font-bold text-gray-800">Rendimento Escolar</h3>
           </div>
           <p className="text-gray-600 mb-4">
-            Análise histórica das taxas de aprovação, reprovação e abandono do Tocantins (2022-2024).
+            Análise histórica das taxas de aprovação, reprovação e abandono do Tocantins (2022-2025).
           </p>
           <button onClick={() => openModal("/analise-rendimento", "Rendimento Escolar")} className="text-indigo-700 font-semibold hover:underline text-sm flex items-center gap-1 cursor-pointer">
             Ver Análise Histórica <ArrowRight size={14} />
@@ -169,7 +169,7 @@ export default function Home() {
             <h3 className="text-xl font-bold text-gray-800">Taxa de Não Resposta</h3>
           </div>
           <p className="text-gray-600 mb-4">
-            Análise do percentual de alunos sem situação de rendimento declarada — Ensino Fundamental e Médio (2022–2024).
+            Análise do percentual de alunos sem situação de rendimento declarada — Ensino Fundamental e Médio (2022–2025).
           </p>
           <button onClick={() => openModal("/analise-tnr", "Taxa de Não Resposta")} className="text-amber-600 font-semibold hover:underline text-sm flex items-center gap-1 cursor-pointer">
             Ver Análise <ArrowRight size={14} />

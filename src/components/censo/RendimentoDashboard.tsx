@@ -52,7 +52,7 @@ export default function RendimentoDashboard() {
   const [redeFilter, setRedeFilter] = useState<string>("Total");
   const [regiaoComparacao, setRegiaoComparacao] = useState<string>("Norte");
   const [estadoComparacao, setEstadoComparacao] = useState<string>("São Paulo");
-  const [anoReferencia, setAnoReferencia] = useState<number>(2024);
+  const [anoReferencia, setAnoReferencia] = useState<number>(2025);
   const [rankingScope, setRankingScope] = useState<"Brasil" | "Região">("Brasil");
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export default function RendimentoDashboard() {
   }, [data, nivelFilter, segmentoFilter, localizacaoFilter, redeFilter]);
 
   const statsByYear = useMemo(() => {
-    const years = [2022, 2023, 2024];
+    const years = [2022, 2023, 2024, 2025];
     const stats: Record<number, Record<string, number | undefined>> = {};
     
     // Filter specifically for Tocantins for historical evolution
@@ -187,8 +187,8 @@ export default function RendimentoDashboard() {
     );
   }
 
-  const kpiYear = 2024;
-  const kpiPrevYear = 2023;
+  const kpiYear = 2025;
+  const kpiPrevYear = 2024;
   
   const getTrend = (type: string) => {
     const current = statsByYear[kpiYear]?.[type];
@@ -323,6 +323,7 @@ export default function RendimentoDashboard() {
             onChange={(e) => setAnoReferencia(Number(e.target.value))}
             className="bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-green-500 outline-none min-w-[100px]"
           >
+            <option value={2025}>2025</option>
             <option value={2024}>2024</option>
             <option value={2023}>2023</option>
             <option value={2022}>2022</option>
@@ -368,18 +369,18 @@ export default function RendimentoDashboard() {
               {getTrend("aprovacao").label}
             </div>
           </div>
-          <h3 className="text-gray-500 font-medium text-sm mb-1 uppercase tracking-wider">Taxa de Aprovação (2024)</h3>
+          <h3 className="text-gray-500 font-medium text-sm mb-1 uppercase tracking-wider">Taxa de Aprovação ({kpiYear})</h3>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-gray-800">
-              {statsByYear[2024]?.aprovacao != null 
-                ? `${Number(statsByYear[2024].aprovacao).toFixed(1)}%` 
+              {statsByYear[kpiYear]?.aprovacao != null
+                ? `${Number(statsByYear[kpiYear].aprovacao).toFixed(1)}%`
                 : "N/A"}
             </span>
           </div>
           <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${statsByYear[2024]?.aprovacao || 0}%` }}
+              animate={{ width: `${statsByYear[kpiYear]?.aprovacao || 0}%` }}
               className="h-full bg-green-500"
             />
           </div>
@@ -405,18 +406,18 @@ export default function RendimentoDashboard() {
               {getTrend("reprovacao").label}
             </div>
           </div>
-          <h3 className="text-gray-500 font-medium text-sm mb-1 uppercase tracking-wider">Taxa de Reprovação (2024)</h3>
+          <h3 className="text-gray-500 font-medium text-sm mb-1 uppercase tracking-wider">Taxa de Reprovação ({kpiYear})</h3>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-gray-800">
-              {statsByYear[2024]?.reprovacao != null 
-                ? `${Number(statsByYear[2024].reprovacao).toFixed(1)}%` 
+              {statsByYear[kpiYear]?.reprovacao != null
+                ? `${Number(statsByYear[kpiYear].reprovacao).toFixed(1)}%`
                 : "N/A"}
             </span>
           </div>
           <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${statsByYear[2024]?.reprovacao || 0}%` }}
+              animate={{ width: `${statsByYear[kpiYear]?.reprovacao || 0}%` }}
               className="h-full bg-red-500"
             />
           </div>
@@ -442,18 +443,18 @@ export default function RendimentoDashboard() {
               {getTrend("abandono").label}
             </div>
           </div>
-          <h3 className="text-gray-500 font-medium text-sm mb-1 uppercase tracking-wider">Taxa de Abandono (2024)</h3>
+          <h3 className="text-gray-500 font-medium text-sm mb-1 uppercase tracking-wider">Taxa de Abandono ({kpiYear})</h3>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-black text-gray-800">
-              {statsByYear[2024]?.abandono != null 
-                ? `${Number(statsByYear[2024].abandono).toFixed(1)}%` 
+              {statsByYear[kpiYear]?.abandono != null
+                ? `${Number(statsByYear[kpiYear].abandono).toFixed(1)}%`
                 : "N/A"}
             </span>
           </div>
           <div className="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${statsByYear[2024]?.abandono || 0}%` }}
+              animate={{ width: `${statsByYear[kpiYear]?.abandono || 0}%` }}
               className="h-full bg-orange-500"
             />
           </div>
@@ -463,7 +464,7 @@ export default function RendimentoDashboard() {
       {/* Comparison Chart */}
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
         <h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center gap-2">
-          <BarChart className="text-[#0D6E3F]" /> Evolução Histórica (2022-2024)
+          <BarChart className="text-[#0D6E3F]" /> Evolução Histórica (2022-2025)
         </h3>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -472,7 +473,7 @@ export default function RendimentoDashboard() {
             <div key={type} className="space-y-6">
               <h4 className="text-center font-bold text-gray-400 uppercase text-xs tracking-widest">{type}</h4>
               <div className="flex justify-around h-64 border-b border-gray-100 pb-2 gap-4">
-                {[2022, 2023, 2024].map((year) => {
+                {[2022, 2023, 2024, 2025].map((year) => {
                   const val = Number(statsByYear[year][type] || 0);
                   // Scale: Approval is 0-100, Reprovacao/Abandono are usually 0-20
                   const maxScale = type === "aprovacao" ? 100 : 20;
