@@ -37,7 +37,7 @@ export default function TnrDashboard() {
   const [localizacaoFilter, setLocalizacaoFilter] = useState<string>("Total");
   const [redeFilter, setRedeFilter] = useState<string>("Total");
   const [regiaoComparacao, setRegiaoComparacao] = useState<string>("Norte");
-  const [anoReferencia, setAnoReferencia] = useState<number>(2024);
+  const [anoReferencia, setAnoReferencia] = useState<number>(2025);
   const [rankingScope, setRankingScope] = useState<"Brasil" | "Região">("Brasil");
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function TnrDashboard() {
 
   // Historical stats for Tocantins (2022-2024)
   const statsByYear = useMemo(() => {
-    const years = [2022, 2023, 2024];
+    const years = [2022, 2023, 2024, 2025];
     const stats: Record<number, number | undefined> = {};
     const tocantinsData = filteredData.filter(d => d.nome_da_unidade_federativa === "Tocantins");
     years.forEach(year => {
@@ -236,6 +236,7 @@ export default function TnrDashboard() {
               onChange={(e) => setAnoReferencia(Number(e.target.value))}
               className="bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-amber-500 outline-none min-w-[100px]"
             >
+              <option value={2025}>2025</option>
               <option value={2024}>2024</option>
               <option value={2023}>2023</option>
               <option value={2022}>2022</option>
@@ -265,14 +266,14 @@ export default function TnrDashboard() {
       {/* Evolução Histórica (2022-2024) */}
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
         <h3 className="text-xl font-bold text-gray-800 mb-8 flex items-center gap-2">
-          <BarChart className="text-amber-500" /> Evolução Histórica — Tocantins (2022–2024)
+          <BarChart className="text-amber-500" /> Evolução Histórica — Tocantins (2022–2025)
         </h3>
         {(() => {
-          const histVals = [2022, 2023, 2024].map(y => Number(statsByYear[y] || 0));
+          const histVals = [2022, 2023, 2024, 2025].map(y => Number(statsByYear[y] || 0));
           const chartMax = Math.max(...histVals, 0.1) * 1.35;
           return (
             <div className="flex justify-center gap-12 h-64 items-end border-b border-gray-100 pb-4">
-              {[2022, 2023, 2024].map((year, i) => {
+              {[2022, 2023, 2024, 2025].map((year, i) => {
                 const val = histVals[i];
                 const height = val > 0 ? Math.min(100, Math.max(8, (val / chartMax) * 100)) : 0;
                 const isRef = year === anoReferencia;
