@@ -16,6 +16,7 @@ interface SearchableSelectProps {
   placeholder?: string;
   className?: string;
   emptyLabel?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ export default function SearchableSelect({
   placeholder = "Buscar...",
   className,
   emptyLabel = "Nenhum resultado",
+  disabled = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -46,6 +48,15 @@ export default function SearchableSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Fecha o dropdown se ele ficar desabilitado enquanto estava aberto
+  // (ex.: municípios ainda carregando).
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+      setQuery("");
+    }
+  }, [disabled]);
 
   const filtered = useMemo(() => {
     if (!query) return options;
@@ -83,17 +94,22 @@ export default function SearchableSelect({
     <div ref={containerRef} className={cn("relative w-full", className)}>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => {
+          if (disabled) return;
           setOpen((o) => !o);
           setTimeout(() => inputRef.current?.focus(), 0);
         }}
-        className="bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-green-500 outline-none w-full flex items-center justify-between gap-2 text-left"
+        className={cn(
+          "bg-gray-50 border-none rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-green-500 outline-none w-full flex items-center justify-between gap-2 text-left",
+          disabled && "opacity-60 cursor-not-allowed"
+        )}
       >
         <span className="truncate">{value || placeholder}</span>
         <ChevronDown size={14} className={cn("text-gray-400 shrink-0 transition-transform", open && "rotate-180")} />
       </button>
 
-      {open && (
+      {open && !disabled && (
         <div className="absolute z-[60] mt-2 w-full min-w-[220px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="relative p-2 border-b border-gray-50">
             <Search size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" />
