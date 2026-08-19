@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, UserPlus, PlusCircle, Edit3, Trash2, Shield,
   FileSpreadsheet, FileText, Calendar, MapPin, DollarSign, ListOrdered, CheckCircle2,
-  Route, ExternalLink, Loader2, Hash, School, X, Lock, Unlock, Filter, CalendarRange, LogOut
+  Route, ExternalLink, Loader2, Hash, School, X, Lock, Unlock, Filter, CalendarRange, LogOut,
+  Users, UserMinus
 } from "lucide-react";
 import AccessCodeModal from "@/components/censo/AccessCodeModal";
 import SearchableSelect from "@/components/ui/SearchableSelect";
@@ -70,6 +71,9 @@ interface Diaria {
   quantidade_diarias: number;
   origem_rota?: string;
   distancia_km?: number;
+  // Presente quando a diária foi gerada a partir de um lançamento em
+  // equipe (ver `equipes_monitoramento`); nula para lançamentos individuais.
+  equipe_id?: string | null;
   tecnicos: {
     matricula: string;
     nome: string;
@@ -119,14 +123,33 @@ export default function DiariasPage() {
   const [isLoadingMunicipios, setIsLoadingMunicipios] = useState(false);
   const [dataSaida, setDataSaida] = useState("");
   const [dataRetorno, setDataRetorno] = useState("");
-  // OS e Valor da diária: definidos pelo administrador para o período de
-  // monitoramento corrente (diarias_configuracao). Técnicos apenas visualizam.
-  const [ordemServicoConfig, setOrdemServicoConfig] = useState("");
+  // OS: gerada automaticamente pelo sistema a cada lançamento (individual ou
+  // de equipe), via a função `proximo_numero_os()` no banco — é ela que
+  // separa os lançamentos/equipes no relatório exportado. O admin não define
+  // mais uma OS fixa para o período. Ao editar uma diária existente, o campo
+  // apenas exibe a OS já atribuída (não é regerada).
   const [ordemServico, setOrdemServico] = useState("");
+  // Valor da diária: definido pelo administrador para o período de
+  // monitoramento corrente (diarias_configuracao). Técnicos apenas visualizam.
   const [valorDiariaConfig, setValorDiariaConfig] = useState(335.00);
   const [valorDiaria, setValorDiaria] = useState(335.00);
   const [quantidadeDiarias, setQuantidadeDiarias] = useState<number>(0);
   const [qtdManuallyEdited, setQtdManuallyEdited] = useState(false);
+
+  // Modo de lançamento: diária individual (comportamento original) ou para
+  // toda a equipe de monitoramento do técnico responsável.
+  const [modoLancamento, setModoLancamento] = useState<"individual" | "equipe">("individual");
+  // Integrantes ADICIONAIS da equipe (o técnico responsável — activeTecnico —
+  // já faz parte da equipe automaticamente e não entra nesta lista).
+  const [equipeMembros, setEquipeMembros] = useState<Tecnico[]>([]);
+  const [equipeMatriculaInput, setEquipeMatriculaInput] = useState("");
+  const [isSearchingEquipeMembro, setIsSearchingEquipeMembro] = useState(false);
+  const [equipeMembroError, setEquipeMembroError] = useState("");
+  // Cadastro inline de um novo integrante, quando a matrícula buscada não existe
+  const [isRegisteringEquipeMembro, setIsRegisteringEquipeMembro] = useState(false);
+  const [novoMembroNome, setNovoMembroNome] = useState("");
+  const [novoMembroRegional, setNovoMembroRegional] = useState("");
+  const [novoMembroRegError, setNovoMembroRegError] = useState("");
 
   // Route states
   const [showRotaSection, setShowRotaSection] = useState(false);
@@ -161,11 +184,6 @@ export default function DiariasPage() {
   const [novoValorDiariaConfig, setNovoValorDiariaConfig] = useState("335.00");
   const [isSalvandoValorDiaria, setIsSalvandoValorDiaria] = useState(false);
   const [valorDiariaSalvoMsg, setValorDiariaSalvoMsg] = useState(false);
-
-  // OS (Ordem de Serviço) para o período de monitoramento (campo do admin)
-  const [novaOrdemServicoConfig, setNovaOrdemServicoConfig] = useState("");
-  const [isSalvandoOS, setIsSalvandoOS] = useState(false);
-  const [osSalvaMsg, setOsSalvaMsg] = useState(false);
 
   // Filtro de data para a tabela/exportação do painel admin
   const [filtroDataInicio, setFiltroDataInicio] = useState("");
@@ -309,7 +327,7 @@ export default function DiariasPage() {
     setDestinoError("");
     setDataSaida("");
     setDataRetorno("");
-    setOrdemServico(ordemServicoConfig);
+    setOrdemServico("");
     setValorDiaria(valorDiariaConfig);
     setQuantidadeDiarias(0);
     setQtdManuallyEdited(false);
@@ -322,6 +340,14 @@ export default function DiariasPage() {
     setEscolaSearchError("");
     setOpenEtapasFor(null);
     setEscolaPendente(null);
+    setModoLancamento("individual");
+    setEquipeMembros([]);
+    setEquipeMatriculaInput("");
+    setEquipeMembroError("");
+    setIsRegisteringEquipeMembro(false);
+    setNovoMembroNome("");
+    setNovoMembroRegional("");
+    setNovoMembroRegError("");
   };
 
   // Fetch technician's individual diaries
@@ -385,13 +411,14 @@ export default function DiariasPage() {
     }
   }, [isAdmin]);
 
-  // Fetch the global "lançamento bloqueado" flag, the fixed valor_diaria and
-  // the fixed ordem_servico — needed for both technicians and admin
+  // Fetch the global "lançamento bloqueado" flag and the fixed valor_diaria
+  // — needed for both technicians and admin. A OS não é mais lida daqui:
+  // ela é gerada automaticamente pelo sistema a cada lançamento.
   const fetchConfiguracao = async () => {
     try {
       const { data, error } = await supabase
         .from("diarias_configuracao")
-        .select("bloqueado, valor_diaria, ordem_servico")
+        .select("bloqueado, valor_diaria")
         .eq("id", 1)
         .single();
 
@@ -403,10 +430,6 @@ export default function DiariasPage() {
           setValorDiaria(v);
           setNovoValorDiariaConfig(v.toFixed(2));
         }
-        const os = data.ordem_servico || "";
-        setOrdemServicoConfig(os);
-        setOrdemServico(os);
-        setNovaOrdemServicoConfig(os);
       }
     } catch (err) {
       console.error(err);
@@ -445,33 +468,6 @@ export default function DiariasPage() {
       alert("Erro ao atualizar o valor da diária.");
     } finally {
       setIsSalvandoValorDiaria(false);
-    }
-  };
-
-  // Admin action: update the fixed ordem_servico used for the current monitoring period
-  const handleSalvarOrdemServico = async () => {
-    const novaOS = novaOrdemServicoConfig.trim();
-
-    setIsSalvandoOS(true);
-    setOsSalvaMsg(false);
-    try {
-      const { error } = await supabase
-        .from("diarias_configuracao")
-        .update({ ordem_servico: novaOS || null, updated_at: new Date().toISOString() })
-        .eq("id", 1);
-
-      if (!error) {
-        setOrdemServicoConfig(novaOS);
-        if (!editingDiariaId) setOrdemServico(novaOS);
-        setOsSalvaMsg(true);
-        setTimeout(() => setOsSalvaMsg(false), 3000);
-      } else {
-        alert("Erro ao atualizar a OS. Tente novamente.");
-      }
-    } catch (err) {
-      alert("Erro ao atualizar a OS.");
-    } finally {
-      setIsSalvandoOS(false);
     }
   };
 
@@ -534,6 +530,93 @@ export default function DiariasPage() {
       }
     } catch (err) {
       setRegError("Erro ao cadastrar técnico.");
+    }
+  };
+
+  // Search a colleague by matrícula and add them to the team being assembled
+  // for a "lançamento em equipe". If not found, opens the inline registration
+  // mini-form so the responsible técnico can cadastrar the colleague on the spot.
+  const handleAddEquipeMembro = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isRegisteringEquipeMembro) return;
+
+    const matricula = equipeMatriculaInput.trim();
+    if (!matricula) return;
+
+    if (activeTecnico && matricula === activeTecnico.matricula) {
+      setEquipeMembroError("Você já é o responsável por este lançamento.");
+      return;
+    }
+    if (equipeMembros.some((m) => m.matricula === matricula)) {
+      setEquipeMembroError("Este técnico já foi adicionado à equipe.");
+      return;
+    }
+
+    setIsSearchingEquipeMembro(true);
+    setEquipeMembroError("");
+    try {
+      const { data, error } = await supabase
+        .from("tecnicos")
+        .select("*")
+        .eq("matricula", matricula)
+        .single();
+
+      if (error || !data) {
+        setEquipeMembroError("Técnico não encontrado. Você pode cadastrá-lo abaixo.");
+        setIsRegisteringEquipeMembro(true);
+      } else {
+        setEquipeMembros((prev) => [...prev, data]);
+        setEquipeMatriculaInput("");
+      }
+    } catch (err) {
+      setEquipeMembroError("Erro ao pesquisar técnico.");
+    } finally {
+      setIsSearchingEquipeMembro(false);
+    }
+  };
+
+  const handleRemoveEquipeMembro = (matricula: string) => {
+    setEquipeMembros((prev) => prev.filter((m) => m.matricula !== matricula));
+  };
+
+  const handleCancelRegisterEquipeMembro = () => {
+    setIsRegisteringEquipeMembro(false);
+    setNovoMembroNome("");
+    setNovoMembroRegional("");
+    setNovoMembroRegError("");
+  };
+
+  // Register a colleague inline (from the team-builder) and add them straight to the team
+  const handleRegisterEquipeMembro = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const matricula = equipeMatriculaInput.trim();
+    if (!matricula || !novoMembroNome.trim() || !novoMembroRegional.trim()) {
+      setNovoMembroRegError("Preencha todos os campos.");
+      return;
+    }
+    if (!/^\d+$/.test(matricula)) {
+      setNovoMembroRegError("A matrícula deve conter apenas números.");
+      return;
+    }
+
+    setNovoMembroRegError("");
+    try {
+      const { data, error } = await supabase
+        .from("tecnicos")
+        .insert([{ matricula, nome: novoMembroNome.trim(), regional: novoMembroRegional.trim() }])
+        .select()
+        .single();
+
+      if (error) {
+        setNovoMembroRegError("Erro ao salvar técnico. A matrícula pode já estar em uso.");
+      } else {
+        setEquipeMembros((prev) => [...prev, data]);
+        setEquipeMatriculaInput("");
+        setEquipeMembroError("");
+        handleCancelRegisterEquipeMembro();
+      }
+    } catch (err) {
+      setNovoMembroRegError("Erro ao cadastrar técnico.");
     }
   };
 
@@ -706,15 +789,19 @@ export default function DiariasPage() {
       return;
     }
 
+    const isEquipe = modoLancamento === "equipe" && !editingDiariaId;
+    // O responsável (activeTecnico) sempre faz parte da equipe; em modo
+    // individual a "equipe" é só ele mesmo.
+    const membrosEquipe: Tecnico[] = isEquipe ? [activeTecnico, ...equipeMembros] : [activeTecnico];
+
     setIsSubmitting(true);
     setFormMessage(null);
 
-    const diariaData = {
-      matricula_tecnico: activeTecnico.matricula,
+    // Dados da viagem compartilhados por todos os integrantes do lançamento
+    const dadosViagemBase = {
       destino: destino.trim(),
       data_saida: dataSaida,
       data_retorno: dataRetorno,
-      ordem_servico: ordemServico.trim() || null,
       valor_diaria: valorDiaria,
       quantidade_diarias: quantidadeDiarias,
       origem_rota: origemRota.trim() || null,
@@ -723,41 +810,119 @@ export default function DiariasPage() {
     };
 
     try {
-      let diariaId = editingDiariaId;
-
-      if (editingDiariaId) {
-        // Edit existing
-        const { error } = await supabase
-          .from("diarias")
-          .update(diariaData)
-          .eq("id", editingDiariaId);
-
-        if (error) throw error;
-        setFormMessage({ type: "success", text: "Diária atualizada com sucesso!" });
-      } else {
-        // Create new
-        const { data, error } = await supabase
-          .from("diarias")
-          .insert([diariaData])
-          .select()
-          .single();
-
-        if (error) throw error;
-        diariaId = data.id;
-        setFormMessage({ type: "success", text: "Diária lançada com sucesso!" });
+      // A OS é gerada automaticamente pelo sistema para cada NOVO lançamento
+      // (individual ou de equipe) — é ela que separa os lançamentos/equipes
+      // no relatório exportado. Ao editar, a OS já atribuída é preservada.
+      let osGerada = ordemServico;
+      if (!editingDiariaId) {
+        const { data: osData, error: osError } = await supabase.rpc("proximo_numero_os");
+        if (osError) throw osError;
+        osGerada = String(osData);
       }
 
-      // Sync monitored schools (delete previous links, then re-insert current selection)
-      if (diariaId) {
-        await supabase.from("diarias_escolas").delete().eq("diaria_id", diariaId);
-        if (selectedEscolas.length > 0) {
-          const escolaRows = selectedEscolas.map((esc) => ({
-            diaria_id: diariaId,
-            codigo_escola: esc.codigo_escola,
-            etapas: esc.etapas,
+      if (isEquipe) {
+        // 1) Registro agregador da viagem da equipe
+        const { data: equipeData, error: equipeError } = await supabase
+          .from("equipes_monitoramento")
+          .insert([{
+            matricula_responsavel: activeTecnico.matricula,
+            ordem_servico: osGerada,
+            ...dadosViagemBase,
+          }])
+          .select()
+          .single();
+        if (equipeError) throw equipeError;
+        const equipeId = equipeData.id;
+
+        try {
+          // 2) Integrantes da equipe
+          const membrosRows = membrosEquipe.map((m) => ({
+            equipe_id: equipeId,
+            matricula_tecnico: m.matricula,
           }));
-          const { error: escolasError } = await supabase.from("diarias_escolas").insert(escolaRows);
-          if (escolasError) throw escolasError;
+          const { error: membrosError } = await supabase
+            .from("equipes_monitoramento_membros")
+            .insert(membrosRows);
+          if (membrosError) throw membrosError;
+
+          // 3) Uma diária individual por integrante, todas com a mesma OS/viagem
+          const diariasRows = membrosEquipe.map((m) => ({
+            matricula_tecnico: m.matricula,
+            equipe_id: equipeId,
+            ordem_servico: osGerada,
+            ...dadosViagemBase,
+          }));
+          const { data: diariasInseridas, error: diariasError } = await supabase
+            .from("diarias")
+            .insert(diariasRows)
+            .select();
+          if (diariasError) throw diariasError;
+
+          // 4) Escolas monitoradas replicadas para a diária de cada integrante
+          const escolasRows = (diariasInseridas || []).flatMap((d: { id: string }) =>
+            selectedEscolas.map((esc) => ({
+              diaria_id: d.id,
+              codigo_escola: esc.codigo_escola,
+              etapas: esc.etapas,
+            }))
+          );
+          if (escolasRows.length > 0) {
+            const { error: escolasError } = await supabase.from("diarias_escolas").insert(escolasRows);
+            if (escolasError) throw escolasError;
+          }
+
+          setFormMessage({
+            type: "success",
+            text: `Diária lançada com sucesso para ${membrosEquipe.length} integrante(s) da equipe! OS gerada: ${osGerada}`,
+          });
+        } catch (innerErr) {
+          // Evita deixar o registro de equipe órfão se um passo seguinte falhar
+          await supabase.from("equipes_monitoramento").delete().eq("id", equipeId);
+          throw innerErr;
+        }
+      } else {
+        const diariaData = {
+          matricula_tecnico: activeTecnico.matricula,
+          ordem_servico: osGerada,
+          ...dadosViagemBase,
+        };
+
+        let diariaId = editingDiariaId;
+
+        if (editingDiariaId) {
+          // Edit existing
+          const { error } = await supabase
+            .from("diarias")
+            .update(diariaData)
+            .eq("id", editingDiariaId);
+
+          if (error) throw error;
+          setFormMessage({ type: "success", text: "Diária atualizada com sucesso!" });
+        } else {
+          // Create new
+          const { data, error } = await supabase
+            .from("diarias")
+            .insert([diariaData])
+            .select()
+            .single();
+
+          if (error) throw error;
+          diariaId = data.id;
+          setFormMessage({ type: "success", text: `Diária lançada com sucesso! OS gerada: ${osGerada}` });
+        }
+
+        // Sync monitored schools (delete previous links, then re-insert current selection)
+        if (diariaId) {
+          await supabase.from("diarias_escolas").delete().eq("diaria_id", diariaId);
+          if (selectedEscolas.length > 0) {
+            const escolaRows = selectedEscolas.map((esc) => ({
+              diaria_id: diariaId,
+              codigo_escola: esc.codigo_escola,
+              etapas: esc.etapas,
+            }));
+            const { error: escolasError } = await supabase.from("diarias_escolas").insert(escolaRows);
+            if (escolasError) throw escolasError;
+          }
         }
       }
 
@@ -770,7 +935,7 @@ export default function DiariasPage() {
       setDestinoError("");
       setDataSaida("");
       setDataRetorno("");
-      setOrdemServico(ordemServicoConfig);
+      setOrdemServico("");
       setValorDiaria(valorDiariaConfig);
       setQuantidadeDiarias(0);
       setQtdManuallyEdited(false);
@@ -783,6 +948,11 @@ export default function DiariasPage() {
       setEscolaSearchError("");
       setOpenEtapasFor(null);
       setEscolaPendente(null);
+      setModoLancamento("individual");
+      setEquipeMembros([]);
+      setEquipeMatriculaInput("");
+      setEquipeMembroError("");
+      handleCancelRegisterEquipeMembro();
 
       // Refresh list
       fetchMinhasDiarias(activeTecnico.matricula);
@@ -797,6 +967,13 @@ export default function DiariasPage() {
   // Edit action
   const handleEditClick = (diaria: Diaria) => {
     setEditingDiariaId(diaria.id);
+    // Edição sempre se comporta como um lançamento individual, mesmo que a
+    // diária tenha se originado de um lançamento em equipe.
+    setModoLancamento("individual");
+    setEquipeMembros([]);
+    setEquipeMatriculaInput("");
+    setEquipeMembroError("");
+    handleCancelRegisterEquipeMembro();
     setDestino(diaria.destino);
     // Try to recompose the Origem/Destinos dropdowns from the saved
     // "Origem/Destino1/.../DestinoN/Origem" string
@@ -1128,12 +1305,44 @@ export default function DiariasPage() {
 
               {/* Lançar Form Card */}
               <div className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm space-y-6">
-                <div className="border-b border-gray-100 pb-4">
-                  <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <PlusCircle className="text-[#0D6E3F]" size={22} />
-                    {editingDiariaId ? "Editar Lançamento de Diária" : "Lançar Nova Diária"}
-                  </h2>
-                  <p className="text-sm text-gray-400 mt-1">Preencha os dados da viagem abaixo.</p>
+                <div className="border-b border-gray-100 pb-4 space-y-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                      <PlusCircle className="text-[#0D6E3F]" size={22} />
+                      {editingDiariaId ? "Editar Lançamento de Diária" : "Lançar Nova Diária"}
+                    </h2>
+                    <p className="text-sm text-gray-400 mt-1">Preencha os dados da viagem abaixo.</p>
+                  </div>
+
+                  {/* Alternância individual / equipe — só faz sentido para um novo lançamento */}
+                  {!editingDiariaId && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setModoLancamento("individual")}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm border transition-all cursor-pointer ${
+                          modoLancamento === "individual"
+                            ? "bg-[#0D6E3F] text-white border-[#0D6E3F]"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-green-300"
+                        }`}
+                      >
+                        <CheckCircle2 size={16} />
+                        Diária Individual
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setModoLancamento("equipe")}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm border transition-all cursor-pointer ${
+                          modoLancamento === "equipe"
+                            ? "bg-[#0D6E3F] text-white border-[#0D6E3F]"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-green-300"
+                        }`}
+                      >
+                        <Users size={16} />
+                        Lançar para Minha Equipe
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {periodoBloqueado && !isAdmin ? (
@@ -1150,7 +1359,7 @@ export default function DiariasPage() {
                 ) : (
                 <form onSubmit={handleSubmitDiaria} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* OS — fixa, definida pelo administrador para o período */}
+                    {/* OS — gerada automaticamente pelo sistema a cada lançamento */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
                         <ListOrdered size={16} className="text-gray-400" />
@@ -1158,12 +1367,124 @@ export default function DiariasPage() {
                       </label>
                       <div className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 font-semibold flex items-center gap-2">
                         <Lock size={14} className="text-gray-400" />
-                        {ordemServico || "Nenhuma OS definida pelo administrador"}
+                        {editingDiariaId ? (ordemServico || "—") : "Gerada automaticamente ao lançar"}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
-                        OS fixa definida pelo administrador para o período de monitoramento.
+                        {editingDiariaId
+                          ? "OS já atribuída a este lançamento; não é alterada ao editar."
+                          : "O sistema atribui a OS automaticamente ao confirmar o lançamento — ela separa os lançamentos/equipes no relatório."}
                       </p>
                     </div>
+
+                    {/* Equipe — apenas em novos lançamentos no modo "equipe" */}
+                    {modoLancamento === "equipe" && !editingDiariaId && (
+                      <div className="md:col-span-2 border border-green-100 rounded-xl overflow-hidden">
+                        <div className="p-4 bg-green-50/60 flex items-center gap-2 font-semibold text-[#0D6E3F]">
+                          <Users size={18} />
+                          Integrantes da Equipe
+                        </div>
+                        <div className="p-4 space-y-3 bg-white border-t border-green-100">
+                          <div className="flex flex-wrap gap-1.5">
+                            <span className="flex items-center gap-1.5 text-xs bg-green-50 border border-green-200 text-[#0D6E3F] px-2.5 py-1 rounded-full font-medium">
+                              <CheckCircle2 size={12} />
+                              {activeTecnico?.nome} (responsável)
+                            </span>
+                            {equipeMembros.map((m) => (
+                              <span
+                                key={m.matricula}
+                                className="flex items-center gap-1.5 text-xs bg-gray-50 border border-gray-200 text-gray-700 pl-2.5 pr-1.5 py-1 rounded-full font-medium"
+                              >
+                                {m.nome} <span className="text-gray-400">({m.regional})</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveEquipeMembro(m.matricula)}
+                                  className="p-0.5 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                                  title="Remover integrante"
+                                >
+                                  <UserMinus size={12} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+
+                          {!isRegisteringEquipeMembro && (
+                            <div className="flex flex-col md:flex-row gap-2">
+                              <input
+                                type="text"
+                                value={equipeMatriculaInput}
+                                onChange={(e) => setEquipeMatriculaInput(e.target.value.replace(/\D/g, ''))}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") { e.preventDefault(); handleAddEquipeMembro(); }
+                                }}
+                                placeholder="Matrícula do colega (somente números)"
+                                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddEquipeMembro()}
+                                disabled={isSearchingEquipeMembro || !equipeMatriculaInput.trim()}
+                                className="flex items-center justify-center gap-2 bg-[#0D6E3F] hover:bg-[#0a5c35] disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-semibold transition-all cursor-pointer whitespace-nowrap"
+                              >
+                                {isSearchingEquipeMembro ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                                Adicionar
+                              </button>
+                            </div>
+                          )}
+
+                          {equipeMembroError && !isRegisteringEquipeMembro && (
+                            <p className="text-amber-600 text-xs bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
+                              ⚠ {equipeMembroError}
+                            </p>
+                          )}
+
+                          {isRegisteringEquipeMembro && (
+                            <div className="bg-amber-50/60 border border-amber-200 rounded-lg p-4 space-y-3">
+                              <p className="text-sm text-amber-800 font-semibold">
+                                Cadastrar técnico para a matrícula: <span className="text-[#0D6E3F]">{equipeMatriculaInput}</span>
+                              </p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input
+                                  type="text"
+                                  value={novoMembroNome}
+                                  onChange={(e) => setNovoMembroNome(e.target.value)}
+                                  placeholder="Nome completo"
+                                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800"
+                                />
+                                <SearchableSelect
+                                  value={novoMembroRegional}
+                                  onChange={setNovoMembroRegional}
+                                  options={SRE_OPCOES}
+                                  placeholder="Selecione a SRE/SEDE"
+                                  emptyLabel="Nenhuma SRE/SEDE encontrada"
+                                />
+                              </div>
+                              {novoMembroRegError && <p className="text-red-500 text-sm">{novoMembroRegError}</p>}
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleCancelRegisterEquipeMembro}
+                                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg font-semibold hover:bg-gray-50 cursor-pointer"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleRegisterEquipeMembro}
+                                  className="bg-[#0D6E3F] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#0a5c35] cursor-pointer"
+                                >
+                                  Salvar e Adicionar
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          <p className="text-xs text-gray-400">
+                            Os dados da viagem abaixo (origem, destino, datas, escolas) valem para toda a equipe —
+                            será gerada uma diária individual para cada integrante.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Origem */}
                     <div>
@@ -1596,7 +1917,7 @@ export default function DiariasPage() {
                           setDestinoError("");
                           setDataSaida("");
                           setDataRetorno("");
-                          setOrdemServico(ordemServicoConfig);
+                          setOrdemServico("");
                           setValorDiaria(valorDiariaConfig);
                           setQuantidadeDiarias(3.5);
                           setSelectedEscolas([]);
@@ -1639,11 +1960,16 @@ export default function DiariasPage() {
                     minhasDiarias.map((diaria) => (
                       <div key={diaria.id} className="p-4 bg-gray-50 border border-gray-150 rounded-lg hover:border-green-150 transition-all flex justify-between items-start gap-2">
                         <div className="space-y-1 text-sm text-gray-600">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-bold text-gray-800">OS {diaria.ordem_servico}</span>
                             <span className="text-xs bg-green-100 text-[#0D6E3F] px-2 py-0.5 rounded-full font-semibold">
                               {diaria.quantidade_diarias}d
                             </span>
+                            {diaria.equipe_id && (
+                              <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                                <Users size={11} /> Lançada em equipe
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-gray-500 font-medium truncate max-w-[200px]" title={diaria.destino}>
                             {diaria.destino}
@@ -1833,44 +2159,10 @@ export default function DiariasPage() {
               Este é o único valor de diária considerado nos novos lançamentos dos técnicos; eles não podem alterá-lo.
             </p>
 
-            {/* Configuração da OS fixa para o período de monitoramento */}
-            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col md:flex-row md:items-end gap-4">
-              <div className="flex items-center gap-2 text-gray-500 font-semibold text-sm shrink-0">
-                <ListOrdered size={16} />
-                Ordem de Serviço (período de monitoramento)
-              </div>
-              <div className="flex flex-wrap items-end gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1">OS</label>
-                  <input
-                    type="text"
-                    value={novaOrdemServicoConfig}
-                    onChange={(e) => setNovaOrdemServicoConfig(e.target.value)}
-                    placeholder="Ex: 3632"
-                    className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 text-sm w-40"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSalvarOrdemServico}
-                  disabled={isSalvandoOS}
-                  className="bg-[#0D6E3F] hover:bg-[#0a5c35] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 cursor-pointer transition-all"
-                >
-                  {isSalvandoOS ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                  Salvar OS
-                </button>
-                <span className="text-xs text-gray-400">
-                  OS atual: <span className="font-semibold text-gray-600">{ordemServicoConfig || "—"}</span>
-                </span>
-                {osSalvaMsg && (
-                  <span className="text-xs text-[#0D6E3F] font-semibold flex items-center gap-1">
-                    <CheckCircle2 size={14} /> OS atualizada com sucesso!
-                  </span>
-                )}
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 -mt-3">
-              Esta OS é preenchida automaticamente nos novos lançamentos dos técnicos; eles não podem alterá-la.
+            <p className="text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl p-4 flex items-center gap-2">
+              <ListOrdered size={16} className="text-gray-400 shrink-0" />
+              A OS de cada lançamento (individual ou de equipe) é gerada automaticamente pelo sistema — é ela que
+              separa os lançamentos/equipes no relatório exportado. O admin não define mais uma OS fixa para o período.
             </p>
 
             {/* Date filter for the admin table / export */}
@@ -1951,7 +2243,14 @@ export default function DiariasPage() {
                         <td className="p-4">
                           {new Date(diaria.data_saida).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} a {new Date(diaria.data_retorno).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                         </td>
-                        <td className="p-4 font-semibold text-gray-800">{diaria.ordem_servico}</td>
+                        <td className="p-4 font-semibold text-gray-800">
+                          <span className="flex items-center gap-1.5">
+                            {diaria.ordem_servico}
+                            {diaria.equipe_id && (
+                              <Users size={13} className="text-blue-600" aria-label="Lançada em equipe" />
+                            )}
+                          </span>
+                        </td>
                         <td className="p-4">{Number(diaria.valor_diaria).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                         <td className="p-4 font-semibold text-[#0D6E3F]">{diaria.quantidade_diarias}</td>
                         <td className="p-4 font-bold text-gray-850">
