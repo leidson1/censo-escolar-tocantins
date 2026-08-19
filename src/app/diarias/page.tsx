@@ -10,6 +10,7 @@ import {
   Route, ExternalLink, Loader2, Hash, School, X, Lock, Unlock, Filter, CalendarRange, LogOut
 } from "lucide-react";
 import AccessCodeModal from "@/components/censo/AccessCodeModal";
+import SearchableSelect from "@/components/ui/SearchableSelect";
 import { exportDiariasToExcel } from "@/lib/exportExcel";
 import { exportDiariasToPdf } from "@/lib/exportPdf";
 
@@ -194,7 +195,12 @@ export default function DiariasPage() {
   const fetchMunicipios = async () => {
     setIsLoadingMunicipios(true);
     try {
-      const { data, error } = await supabase.from("escolas").select("municipio");
+      // Usa a view `municipios_escolas` (municípios distintos) em vez de
+      // buscar a coluna "municipio" da tabela `escolas` inteira: o PostgREST
+      // limita consultas a 1000 linhas por padrão, e a tabela `escolas` já
+      // passa desse total — buscar direto nela truncava a lista e podia
+      // esconder municípios (ex.: Paranã) do dropdown de Origem/Destino.
+      const { data, error } = await supabase.from("municipios_escolas").select("municipio");
       if (!error && data) {
         const unicos = Array.from(new Set(data.map((r: { municipio: string }) => r.municipio))).sort((a, b) =>
           a.localeCompare(b, "pt-BR")
@@ -1058,17 +1064,15 @@ export default function DiariasPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">SRE/SEDE</label>
-                  <select
+                  <SearchableSelect
                     value={newTecnicoRegional}
-                    onChange={(e) => setNewTecnicoRegional(e.target.value)}
-                    required
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 bg-white"
-                  >
-                    <option value="">Selecione a SRE/SEDE</option>
-                    {SRE_OPCOES.map((sre) => (
-                      <option key={sre} value={sre}>{sre}</option>
-                    ))}
-                  </select>
+                    onChange={setNewTecnicoRegional}
+                    options={SRE_OPCOES}
+                    placeholder="Selecione a SRE/SEDE"
+                    emptyLabel="Nenhuma SRE/SEDE encontrada"
+                  />
+                  {/* SearchableSelect não é um <select> nativo — "required" já é
+                      validado no submit do formulário (handleRegisterTecnico). */}
                 </div>
                 {regError && <p className="text-red-500 text-sm md:col-span-2">{regError}</p>}
                 <div className="md:col-span-2 flex justify-end gap-2 mt-2">
@@ -1167,18 +1171,16 @@ export default function DiariasPage() {
                         <MapPin size={16} className="text-gray-400" />
                         Origem *
                       </label>
-                      <select
+                      <SearchableSelect
                         value={origemMunicipio}
-                        onChange={(e) => setOrigemMunicipio(e.target.value)}
-                        required
+                        onChange={setOrigemMunicipio}
+                        options={municipios}
                         disabled={isLoadingMunicipios}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                      >
-                        <option value="">{isLoadingMunicipios ? "Carregando municípios..." : "Selecione o município de origem"}</option>
-                        {municipios.map((m) => (
-                          <option key={m} value={m}>{m}</option>
-                        ))}
-                      </select>
+                        placeholder={isLoadingMunicipios ? "Carregando municípios..." : "Selecione o município de origem"}
+                        emptyLabel="Nenhum município encontrado"
+                      />
+                      {/* SearchableSelect não é um <select> nativo — "required" já é
+                          validado no submit do formulário (handleLancarDiaria). */}
                     </div>
 
                     {/* Destino(s) — é possível adicionar mais de um município de destino */}
@@ -1188,17 +1190,15 @@ export default function DiariasPage() {
                         Destino(s) *
                       </label>
                       <div className="flex gap-2">
-                        <select
+                        <SearchableSelect
                           value={destinoMunicipioAtual}
-                          onChange={(e) => setDestinoMunicipioAtual(e.target.value)}
+                          onChange={setDestinoMunicipioAtual}
+                          options={municipios}
                           disabled={isLoadingMunicipios}
-                          className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                        >
-                          <option value="">{isLoadingMunicipios ? "Carregando municípios..." : "Selecione um município de destino"}</option>
-                          {municipios.map((m) => (
-                            <option key={m} value={m}>{m}</option>
-                          ))}
-                        </select>
+                          placeholder={isLoadingMunicipios ? "Carregando municípios..." : "Selecione um município de destino"}
+                          emptyLabel="Nenhum município encontrado"
+                          className="flex-1"
+                        />
                         <button
                           type="button"
                           onClick={handleAddDestino}
