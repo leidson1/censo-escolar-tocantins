@@ -8,7 +8,7 @@ import {
   Search, UserPlus, PlusCircle, Edit3, Trash2, Shield,
   FileSpreadsheet, FileText, Calendar, MapPin, DollarSign, ListOrdered, CheckCircle2,
   Route, ExternalLink, Loader2, Hash, School, X, Lock, Unlock, Filter, CalendarRange, LogOut,
-  Users, UserMinus
+  Users, UserMinus, Printer
 } from "lucide-react";
 import AccessCodeModal from "@/components/censo/AccessCodeModal";
 import SearchableSelect from "@/components/ui/SearchableSelect";
@@ -142,6 +142,14 @@ export default function DiariasPage() {
   // Integrantes ADICIONAIS da equipe (o técnico responsável — activeTecnico —
   // já faz parte da equipe automaticamente e não entra nesta lista).
   const [equipeMembros, setEquipeMembros] = useState<Tecnico[]>([]);
+  // Ao editar uma diária lançada em equipe: id do registro em
+  // `equipes_monitoramento` (== diaria.equipe_id) e o mapeamento
+  // matrícula -> id da linha em `diarias` para os integrantes que já
+  // faziam parte da equipe antes desta edição. Integrantes presentes em
+  // `equipeMembros` mas ausentes daqui são NOVOS (adicionados durante a
+  // edição) e geram uma diária nova ao salvar.
+  const [editingEquipeId, setEditingEquipeId] = useState<string | null>(null);
+  const [equipeExistingRows, setEquipeExistingRows] = useState<Record<string, string>>({});
   const [equipeMatriculaInput, setEquipeMatriculaInput] = useState("");
   const [isSearchingEquipeMembro, setIsSearchingEquipeMembro] = useState(false);
   const [equipeMembroError, setEquipeMembroError] = useState("");
@@ -188,6 +196,7 @@ export default function DiariasPage() {
   // Filtro de data para a tabela/exportação do painel admin
   const [filtroDataInicio, setFiltroDataInicio] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
+  const [filtroOS, setFiltroOS] = useState("");
 
   // Formatos e relatórios selecionados para a exportação (admin)
   const [exportarExcel, setExportarExcel] = useState(true);
@@ -285,6 +294,10 @@ export default function DiariasPage() {
     setMinhasDiarias([]);
     setFormMessage(null);
     setEditingDiariaId(null);
+    setEditingEquipeId(null);
+    setEquipeExistingRows({});
+    setModoLancamento("individual");
+    setEquipeMembros([]);
     setSelectedEscolas([]);
     setEscolaCodigoInput("");
     setEscolaSearchError("");
@@ -342,6 +355,8 @@ export default function DiariasPage() {
     setEscolaPendente(null);
     setModoLancamento("individual");
     setEquipeMembros([]);
+    setEditingEquipeId(null);
+    setEquipeExistingRows({});
     setEquipeMatriculaInput("");
     setEquipeMembroError("");
     setIsRegisteringEquipeMembro(false);
@@ -789,10 +804,15 @@ export default function DiariasPage() {
       return;
     }
 
-    const isEquipe = modoLancamento === "equipe" && !editingDiariaId;
+    const isNovaEquipe = modoLancamento === "equipe" && !editingDiariaId;
+    // Editando uma diária que já foi lançada em equipe: qualquer integrante
+    // (ou o Admin) pode acrescentar novos técnicos, além de alterar
+    // destino/datas/escolas, que passam a valer para toda a equipe.
+    const isEdicaoEquipe = modoLancamento === "equipe" && !!editingDiariaId;
     // O responsável (activeTecnico) sempre faz parte da equipe; em modo
     // individual a "equipe" é só ele mesmo.
-    const membrosEquipe: Tecnico[] = isEquipe ? [activeTecnico, ...equipeMembros] : [activeTecnico];
+    const membrosEquipe: Tecnico[] =
+      isNovaEquipe || isEdicaoEquipe ? [activeTecnico, ...equipeMembros] : [activeTecnico];
 
     setIsSubmitting(true);
     setFormMessage(null);
@@ -820,7 +840,104 @@ export default function DiariasPage() {
         osGerada = String(osData);
       }
 
-      if (isEquipe) {
+      if (isEdicaoEquipe) {
+        // Mantém o registro agregador (equipes_monitoramento) em sincronia
+        // com os dados da viagem que acabaram de ser editados.
+        if (editingEquipeId) {
+          const { error: equipeUpdateError } = await supabase
+            .from("equipes_monitoramento")
+            .update(dadosViagemBase)
+            .eq("id", editingEquipeId);
+          if (equipeUpdateError) throw equipeUpdateError;
+        }
+
+        // Integrantes que faziam parte da equipe antes desta edição, mas que
+        // foram removidos da lista agora: exclui a diária deles e o vínculo
+        // com a equipe.
+        const matriculasAtuais = new Set(membrosEquipe.map((m) => m.matricula));
+        const membrosRemovidos = Object.entries(equipeExistingRows).filter(
+          ([matricula]) => !matriculasAtuais.has(matricula)
+        );
+        for (const [matriculaRemovida, diariaRemovidaId] of membrosRemovidos) {
+          await supabase.from("diarias_escolas").delete().eq("diaria_id", diariaRemovidaId);
+          const { error: deleteDiariaError } = await supabase.from("diarias").delete().eq("id", diariaRemovidaId);
+          if (deleteDiariaError) throw deleteDiariaError;
+          if (editingEquipeId) {
+            await supabase
+              .from("equipes_monitoramento_membros")
+              .delete()
+              .eq("equipe_id", editingEquipeId)
+              .eq("matricula_tecnico", matriculaRemovida);
+          }
+        }
+
+        let integrantesNovos = 0;
+        for (const membro of membrosEquipe) {
+          const diariaExistenteId = equipeExistingRows[membro.matricula];
+
+          if (diariaExistenteId) {
+            // Integrante já fazia parte da equipe: apenas sincroniza os
+            // dados da viagem e as escolas monitoradas na sua diária.
+            const { error: updateError } = await supabase
+              .from("diarias")
+              .update({ ordem_servico: osGerada, ...dadosViagemBase })
+              .eq("id", diariaExistenteId);
+            if (updateError) throw updateError;
+
+            await supabase.from("diarias_escolas").delete().eq("diaria_id", diariaExistenteId);
+            if (selectedEscolas.length > 0) {
+              const escolaRows = selectedEscolas.map((esc) => ({
+                diaria_id: diariaExistenteId,
+                codigo_escola: esc.codigo_escola,
+                etapas: esc.etapas,
+              }));
+              const { error: escolasError } = await supabase.from("diarias_escolas").insert(escolaRows);
+              if (escolasError) throw escolasError;
+            }
+          } else if (editingEquipeId) {
+            // Integrante novo, acrescentado durante a edição: cria a diária
+            // dele e o vincula à equipe.
+            const { data: novaDiaria, error: insertError } = await supabase
+              .from("diarias")
+              .insert([{
+                matricula_tecnico: membro.matricula,
+                equipe_id: editingEquipeId,
+                ordem_servico: osGerada,
+                ...dadosViagemBase,
+              }])
+              .select()
+              .single();
+            if (insertError) throw insertError;
+
+            const { error: membroError } = await supabase
+              .from("equipes_monitoramento_membros")
+              .insert([{ equipe_id: editingEquipeId, matricula_tecnico: membro.matricula }]);
+            if (membroError) throw membroError;
+
+            if (selectedEscolas.length > 0) {
+              const escolaRows = selectedEscolas.map((esc) => ({
+                diaria_id: novaDiaria.id,
+                codigo_escola: esc.codigo_escola,
+                etapas: esc.etapas,
+              }));
+              const { error: escolasError } = await supabase.from("diarias_escolas").insert(escolaRows);
+              if (escolasError) throw escolasError;
+            }
+            integrantesNovos += 1;
+          }
+        }
+
+        const partesMsg: string[] = [];
+        if (integrantesNovos > 0) partesMsg.push(`${integrantesNovos} novo(s) integrante(s) adicionado(s)`);
+        if (membrosRemovidos.length > 0) partesMsg.push(`${membrosRemovidos.length} integrante(s) removido(s)`);
+        setFormMessage({
+          type: "success",
+          text:
+            partesMsg.length > 0
+              ? `Diária da equipe atualizada! ${partesMsg.join(" e ")}.`
+              : "Diária da equipe atualizada com sucesso!",
+        });
+      } else if (isNovaEquipe) {
         // 1) Registro agregador da viagem da equipe
         const { data: equipeData, error: equipeError } = await supabase
           .from("equipes_monitoramento")
@@ -950,6 +1067,8 @@ export default function DiariasPage() {
       setEscolaPendente(null);
       setModoLancamento("individual");
       setEquipeMembros([]);
+      setEditingEquipeId(null);
+      setEquipeExistingRows({});
       setEquipeMatriculaInput("");
       setEquipeMembroError("");
       handleCancelRegisterEquipeMembro();
@@ -965,15 +1084,46 @@ export default function DiariasPage() {
   };
 
   // Edit action
-  const handleEditClick = (diaria: Diaria) => {
+  const handleEditClick = async (diaria: Diaria) => {
     setEditingDiariaId(diaria.id);
-    // Edição sempre se comporta como um lançamento individual, mesmo que a
-    // diária tenha se originado de um lançamento em equipe.
-    setModoLancamento("individual");
-    setEquipeMembros([]);
     setEquipeMatriculaInput("");
     setEquipeMembroError("");
     handleCancelRegisterEquipeMembro();
+
+    // Diárias lançadas em equipe continuam em modo "equipe" ao editar: isso
+    // permite que qualquer integrante (ou o Admin) acrescente novos técnicos,
+    // além de alterar destino/escolas para toda a equipe. Diárias individuais
+    // continuam se comportando como antes.
+    if (diaria.equipe_id) {
+      setModoLancamento("equipe");
+      setEditingEquipeId(diaria.equipe_id);
+      try {
+        const { data, error } = await supabase
+          .from("diarias")
+          .select(`id, matricula_tecnico, tecnicos:matricula_tecnico ( matricula, nome, regional )`)
+          .eq("equipe_id", diaria.equipe_id)
+          .neq("id", diaria.id);
+
+        if (!error && data) {
+          const rows = data as unknown as { id: string; matricula_tecnico: string; tecnicos: Tecnico }[];
+          setEquipeMembros(rows.filter((r) => r.tecnicos).map((r) => r.tecnicos));
+          const existingRows: Record<string, string> = { [diaria.matricula_tecnico]: diaria.id };
+          rows.forEach((r) => { existingRows[r.matricula_tecnico] = r.id; });
+          setEquipeExistingRows(existingRows);
+        } else {
+          setEquipeMembros([]);
+          setEquipeExistingRows({ [diaria.matricula_tecnico]: diaria.id });
+        }
+      } catch (err) {
+        setEquipeMembros([]);
+        setEquipeExistingRows({ [diaria.matricula_tecnico]: diaria.id });
+      }
+    } else {
+      setModoLancamento("individual");
+      setEditingEquipeId(null);
+      setEquipeMembros([]);
+      setEquipeExistingRows({});
+    }
     setDestino(diaria.destino);
     // Try to recompose the Origem/Destinos dropdowns from the saved
     // "Origem/Destino1/.../DestinoN/Origem" string
@@ -1031,16 +1181,23 @@ export default function DiariasPage() {
     setIsAdminModalOpen(false);
   };
 
-  // Diárias filtradas por período (data de saída), usadas na tabela e na exportação do admin
+  // Lista de OS distintas presentes nos lançamentos, usada no filtro por OS
+  const osDisponiveis = Array.from(new Set(todasDiarias.map((d) => d.ordem_servico).filter(Boolean))).sort(
+    (a, b) => Number(a) - Number(b) || a.localeCompare(b)
+  );
+
+  // Diárias filtradas por período (data de saída) e/ou OS, usadas na tabela e na exportação do admin
   const diariasFiltradas = todasDiarias.filter((diaria) => {
     if (filtroDataInicio && diaria.data_saida < filtroDataInicio) return false;
     if (filtroDataFim && diaria.data_saida > filtroDataFim) return false;
+    if (filtroOS && diaria.ordem_servico !== filtroOS) return false;
     return true;
   });
 
   const handleLimparFiltroData = () => {
     setFiltroDataInicio("");
     setFiltroDataFim("");
+    setFiltroOS("");
   };
 
   // Municípios da rota atual (origem + destinos) — usado para avisar quando uma
@@ -1311,7 +1468,10 @@ export default function DiariasPage() {
                       <PlusCircle className="text-[#0D6E3F]" size={22} />
                       {editingDiariaId ? "Editar Lançamento de Diária" : "Lançar Nova Diária"}
                     </h2>
-                    <p className="text-sm text-gray-400 mt-1">Preencha os dados da viagem abaixo.</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Preencha os dados da viagem abaixo.{" "}
+                      <span className="text-red-500 font-semibold">*</span> campos obrigatórios.
+                    </p>
                   </div>
 
                   {/* Alternância individual / equipe — só faz sentido para um novo lançamento */}
@@ -1376,8 +1536,10 @@ export default function DiariasPage() {
                       </p>
                     </div>
 
-                    {/* Equipe — apenas em novos lançamentos no modo "equipe" */}
-                    {modoLancamento === "equipe" && !editingDiariaId && (
+                    {/* Equipe — em novos lançamentos no modo "equipe", ou ao editar uma
+                        diária que já foi lançada em equipe (qualquer integrante ou o
+                        Admin pode acrescentar novos técnicos nesse momento) */}
+                    {modoLancamento === "equipe" && (
                       <div className="md:col-span-2 border border-green-100 rounded-xl overflow-hidden">
                         <div className="p-4 bg-green-50/60 flex items-center gap-2 font-semibold text-[#0D6E3F]">
                           <Users size={18} />
@@ -1387,24 +1549,37 @@ export default function DiariasPage() {
                           <div className="flex flex-wrap gap-1.5">
                             <span className="flex items-center gap-1.5 text-xs bg-green-50 border border-green-200 text-[#0D6E3F] px-2.5 py-1 rounded-full font-medium">
                               <CheckCircle2 size={12} />
-                              {activeTecnico?.nome} (responsável)
+                              {activeTecnico?.nome} {editingDiariaId ? "(você)" : "(responsável)"}
                             </span>
-                            {equipeMembros.map((m) => (
-                              <span
-                                key={m.matricula}
-                                className="flex items-center gap-1.5 text-xs bg-gray-50 border border-gray-200 text-gray-700 pl-2.5 pr-1.5 py-1 rounded-full font-medium"
-                              >
-                                {m.nome} <span className="text-gray-400">({m.regional})</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveEquipeMembro(m.matricula)}
-                                  className="p-0.5 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
-                                  title="Remover integrante"
+                            {equipeMembros.map((m) => {
+                              const jaEstavaNaEquipe = editingDiariaId ? Boolean(equipeExistingRows[m.matricula]) : false;
+                              return (
+                                <span
+                                  key={m.matricula}
+                                  className="flex items-center gap-1.5 text-xs bg-gray-50 border border-gray-200 text-gray-700 pl-2.5 pr-1.5 py-1 rounded-full font-medium"
                                 >
-                                  <UserMinus size={12} />
-                                </button>
-                              </span>
-                            ))}
+                                  {m.nome} <span className="text-gray-400">({m.regional})</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (
+                                        jaEstavaNaEquipe &&
+                                        !confirm(
+                                          `Remover ${m.nome} da equipe? A diária dele para este período será excluída ao salvar.`
+                                        )
+                                      ) {
+                                        return;
+                                      }
+                                      handleRemoveEquipeMembro(m.matricula);
+                                    }}
+                                    className="p-0.5 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                                    title="Remover integrante"
+                                  >
+                                    <UserMinus size={12} />
+                                  </button>
+                                </span>
+                              );
+                            })}
                           </div>
 
                           {!isRegisteringEquipeMembro && (
@@ -1479,8 +1654,9 @@ export default function DiariasPage() {
                           )}
 
                           <p className="text-xs text-gray-400">
-                            Os dados da viagem abaixo (origem, destino, datas, escolas) valem para toda a equipe —
-                            será gerada uma diária individual para cada integrante.
+                            {editingDiariaId
+                              ? "Os dados da viagem abaixo (destino, datas, escolas) valem para toda a equipe e serão atualizados na diária de cada integrante já existente. Novos técnicos adicionados aqui ganham uma diária própria ao salvar."
+                              : "Os dados da viagem abaixo (origem, destino, datas, escolas) valem para toda a equipe — será gerada uma diária individual para cada integrante."}
                           </p>
                         </div>
                       </div>
@@ -1490,16 +1666,18 @@ export default function DiariasPage() {
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
                         <MapPin size={16} className="text-gray-400" />
-                        Origem *
+                        Origem <span className="text-red-500">*</span>
                       </label>
-                      <SearchableSelect
-                        value={origemMunicipio}
-                        onChange={setOrigemMunicipio}
-                        options={municipios}
-                        disabled={isLoadingMunicipios}
-                        placeholder={isLoadingMunicipios ? "Carregando municípios..." : "Selecione o município de origem"}
-                        emptyLabel="Nenhum município encontrado"
-                      />
+                      <div className={!origemMunicipio ? "rounded-lg ring-1 ring-amber-300" : ""}>
+                        <SearchableSelect
+                          value={origemMunicipio}
+                          onChange={setOrigemMunicipio}
+                          options={municipios}
+                          disabled={isLoadingMunicipios}
+                          placeholder={isLoadingMunicipios ? "Carregando municípios..." : "Selecione o município de origem"}
+                          emptyLabel="Nenhum município encontrado"
+                        />
+                      </div>
                       {/* SearchableSelect não é um <select> nativo — "required" já é
                           validado no submit do formulário (handleLancarDiaria). */}
                     </div>
@@ -1508,18 +1686,20 @@ export default function DiariasPage() {
                     <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
                         <MapPin size={16} className="text-gray-400" />
-                        Destino(s) *
+                        Destino(s) <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-2">
-                        <SearchableSelect
-                          value={destinoMunicipioAtual}
-                          onChange={setDestinoMunicipioAtual}
-                          options={municipios}
-                          disabled={isLoadingMunicipios}
-                          placeholder={isLoadingMunicipios ? "Carregando municípios..." : "Selecione um município de destino"}
-                          emptyLabel="Nenhum município encontrado"
-                          className="flex-1"
-                        />
+                        <div className={`flex-1 ${destinosMunicipios.length === 0 ? "rounded-lg ring-1 ring-amber-300" : ""}`}>
+                          <SearchableSelect
+                            value={destinoMunicipioAtual}
+                            onChange={setDestinoMunicipioAtual}
+                            options={municipios}
+                            disabled={isLoadingMunicipios}
+                            placeholder={isLoadingMunicipios ? "Carregando municípios..." : "Selecione um município de destino"}
+                            emptyLabel="Nenhum município encontrado"
+                            className="flex-1"
+                          />
+                        </div>
                         <button
                           type="button"
                           onClick={handleAddDestino}
@@ -1573,14 +1753,16 @@ export default function DiariasPage() {
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
                         <Calendar size={16} className="text-gray-400" />
-                        Data de Saída *
+                        Data de Saída <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
                         value={dataSaida}
                         onChange={(e) => { setDataSaida(e.target.value); setQtdManuallyEdited(false); }}
                         required
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800"
+                        className={`w-full px-4 py-2.5 border rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 transition-all ${
+                          dataSaida ? "border-gray-200" : "border-amber-300 bg-amber-50/40"
+                        }`}
                       />
                     </div>
 
@@ -1588,14 +1770,16 @@ export default function DiariasPage() {
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
                         <Calendar size={16} className="text-gray-400" />
-                        Data de Retorno *
+                        Data de Retorno <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
                         value={dataRetorno}
                         onChange={(e) => { setDataRetorno(e.target.value); setQtdManuallyEdited(false); }}
                         required
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800"
+                        className={`w-full px-4 py-2.5 border rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 transition-all ${
+                          dataRetorno ? "border-gray-200" : "border-amber-300 bg-amber-50/40"
+                        }`}
                       />
                     </div>
 
@@ -1618,7 +1802,7 @@ export default function DiariasPage() {
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
                         <Hash size={16} className="text-gray-400" />
-                        Quantidade de Diárias (QTD) *
+                        Quantidade de Diárias (QTD) <span className="text-red-500">*</span>
                         {dataSaida && dataRetorno && !qtdManuallyEdited && (
                           <span className="ml-1 text-xs text-[#0D6E3F] font-normal">⚡ automático</span>
                         )}
@@ -1636,7 +1820,9 @@ export default function DiariasPage() {
                         className={`w-full px-4 py-2.5 border rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 transition-all ${
                           dataSaida && dataRetorno && !qtdManuallyEdited
                             ? "border-green-300 bg-green-50"
-                            : "border-gray-200"
+                            : quantidadeDiarias > 0
+                            ? "border-gray-200"
+                            : "border-amber-300 bg-amber-50/40"
                         }`}
                       />
                       {dataSaida && dataRetorno && !qtdManuallyEdited && (
@@ -1756,8 +1942,16 @@ export default function DiariasPage() {
                   </div>
 
                   {/* Seção de Escolas Monitoradas */}
-                  <div className="border border-green-100 rounded-xl overflow-hidden">
-                    <div className="p-4 bg-green-50/60 flex items-center gap-2 font-semibold text-[#0D6E3F]">
+                  <div
+                    className={`border rounded-xl overflow-hidden ${
+                      selectedEscolas.length === 0 ? "border-amber-300" : "border-green-100"
+                    }`}
+                  >
+                    <div
+                      className={`p-4 flex items-center gap-2 font-semibold text-[#0D6E3F] ${
+                        selectedEscolas.length === 0 ? "bg-amber-50" : "bg-green-50/60"
+                      }`}
+                    >
                       <School size={18} />
                       Escolas para Monitoramento
                       <span className="text-xs font-normal text-red-500">*</span>
@@ -1910,6 +2104,13 @@ export default function DiariasPage() {
                         type="button"
                         onClick={() => {
                           setEditingDiariaId(null);
+                          setModoLancamento("individual");
+                          setEquipeMembros([]);
+                          setEditingEquipeId(null);
+                          setEquipeExistingRows({});
+                          setEquipeMatriculaInput("");
+                          setEquipeMembroError("");
+                          handleCancelRegisterEquipeMembro();
                           setDestino("");
                           setOrigemMunicipio("");
                           setDestinosMunicipios([]);
@@ -1948,9 +2149,22 @@ export default function DiariasPage() {
             {/* Right/List column (My Diaries) */}
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
-                <div className="border-b border-gray-100 pb-3">
-                  <h3 className="text-lg font-bold text-gray-800">Minhas Diárias Lançadas</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Seus lançamentos cadastrados no sistema.</p>
+                <div className="border-b border-gray-100 pb-3 flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">Minhas Diárias Lançadas</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Seus lançamentos cadastrados no sistema.</p>
+                  </div>
+                  {minhasDiarias.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => exportDiariasToPdf(minhasDiarias)}
+                      className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#0D6E3F] hover:border-green-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      title="Imprimir todas as minhas diárias"
+                    >
+                      <Printer size={14} />
+                      Imprimir Todas
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
@@ -1987,6 +2201,13 @@ export default function DiariasPage() {
                           )}
                         </div>
                         <div className="flex gap-1">
+                          <button
+                            onClick={() => exportDiariasToPdf([diaria])}
+                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                            title="Imprimir esta diária"
+                          >
+                            <Printer size={15} />
+                          </button>
                           <button
                             onClick={() => handleEditClick(diaria)}
                             className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
@@ -2169,7 +2390,7 @@ export default function DiariasPage() {
             <div className="flex flex-col md:flex-row md:items-end gap-4 bg-gray-50 border border-gray-100 rounded-xl p-4">
               <div className="flex items-center gap-2 text-gray-500 font-semibold text-sm">
                 <Filter size={16} />
-                Filtrar por período (Data de Saída)
+                Filtrar por período / OS
               </div>
               <div className="flex flex-wrap items-end gap-3">
                 <div>
@@ -2190,7 +2411,22 @@ export default function DiariasPage() {
                     className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 text-sm"
                   />
                 </div>
-                {(filtroDataInicio || filtroDataFim) && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">OS</label>
+                  <select
+                    value={filtroOS}
+                    onChange={(e) => setFiltroOS(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 text-sm bg-white"
+                  >
+                    <option value="">Todas</option>
+                    {osDisponiveis.map((os) => (
+                      <option key={os} value={os}>
+                        {os}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {(filtroDataInicio || filtroDataFim || filtroOS) && (
                   <button
                     type="button"
                     onClick={handleLimparFiltroData}
