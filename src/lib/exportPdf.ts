@@ -39,6 +39,45 @@ function fmtDate(d: string): string {
   return new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
+const MESES = [
+  'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+  'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
+];
+
+// Rótulo de período do cabeçalho, derivado das datas de saída dos lançamentos
+// exportados (não da data em que o relatório é gerado) — assim ele reflete o
+// período de fato monitorado mesmo quando abrange mais de um mês/ano.
+function getPeriodoLabel(data: DiarioEntry[]): string {
+  if (data.length === 0) {
+    return new Date()
+      .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      .toUpperCase();
+  }
+
+  const chaves = Array.from(
+    new Set(
+      data.map((e) => {
+        const d = new Date(e.data_saida);
+        return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+      })
+    )
+  ).sort();
+
+  const [anoIni, mesIni] = chaves[0].split('-').map(Number);
+  const [anoFim, mesFim] = chaves[chaves.length - 1].split('-').map(Number);
+
+  if (chaves.length === 1) return `${MESES[mesIni]} DE ${anoIni}`;
+  if (anoIni === anoFim) return `${MESES[mesIni]} A ${MESES[mesFim]} DE ${anoIni}`;
+  return `${MESES[mesIni]}/${anoIni} A ${MESES[mesFim]}/${anoFim}`;
+}
+
+// Número de técnicos distintos entre os lançamentos exportados — um mesmo
+// técnico pode aparecer em várias linhas (uma por viagem/OS), então não dá
+// para usar data.length aqui.
+function countTecnicosUnicos(data: DiarioEntry[]): number {
+  return new Set(data.map((e) => e.tecnicos.matricula)).size;
+}
+
 export interface ExportRelatoriosOptions {
   incluirDiarias?: boolean;
   incluirEscolas?: boolean;
@@ -52,9 +91,7 @@ export function exportDiariasToPdf(
   if (!incluirDiarias && !incluirEscolas) return;
 
   const now = new Date();
-  const mesAno = now
-    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-    .toUpperCase();
+  const mesAno = getPeriodoLabel(data);
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -140,7 +177,7 @@ export function exportDiariasToPdf(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.text(
-    `TOTAL GERAL — ${data.length} técnico(s)   |   ${grandQtd} diária(s)   |   ${fmtCur(grandVal)}`,
+    `TOTAL GERAL — ${countTecnicosUnicos(data)} técnico(s)   |   ${grandQtd} diária(s)   |   ${fmtCur(grandVal)}`,
     pageWidth - margin,
     finalY + 20,
     { align: 'right' }
