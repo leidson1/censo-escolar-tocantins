@@ -2,13 +2,13 @@
 
 import MainLayout from "@/components/layout/MainLayout";
 import { supabase } from "@/lib/supabase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, UserPlus, PlusCircle, Edit3, Trash2, Shield,
   FileSpreadsheet, FileText, Calendar, MapPin, DollarSign, ListOrdered, CheckCircle2,
   Route, ExternalLink, Loader2, Hash, School, X, Lock, Unlock, Filter, CalendarRange, LogOut,
-  Users, UserMinus, Printer
+  Users, UserMinus, Printer, ChevronDown
 } from "lucide-react";
 import AccessCodeModal from "@/components/censo/AccessCodeModal";
 import SearchableSelect from "@/components/ui/SearchableSelect";
@@ -91,6 +91,94 @@ function normalizeDiarias(list: Diaria[]): Diaria[] {
       .filter((de) => de.escolas)
       .map((de) => ({ ...de.escolas, etapas: de.etapas || [] })),
   }));
+}
+
+// Dropdown de múltipla seleção para o filtro de OS: mostra uma lista de
+// checkboxes (uma por OS disponível) e fecha ao clicar fora.
+interface OsMultiSelectProps {
+  options: string[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+}
+
+function OsMultiSelect({ options, selected, onChange }: OsMultiSelectProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const label = useMemo(() => {
+    if (selected.length === 0) return "Todas";
+    if (selected.length === 1) return selected[0];
+    if (selected.length <= 3) return selected.join(", ");
+    return `${selected.length} OS selecionadas`;
+  }, [selected]);
+
+  const toggleOs = (os: string) => {
+    if (selected.includes(os)) onChange(selected.filter((o) => o !== os));
+    else onChange([...selected, os]);
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 text-sm bg-white flex items-center gap-2 min-w-[140px] justify-between cursor-pointer"
+      >
+        <span className="truncate">{label}</span>
+        <ChevronDown size={14} className={`text-gray-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-[60] mt-1 min-w-[180px] bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-50">
+            <button
+              type="button"
+              onClick={() => onChange(options.slice())}
+              className="text-xs font-semibold text-[#0D6E3F] hover:underline cursor-pointer"
+            >
+              Selecionar todas
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="text-xs font-semibold text-gray-500 hover:underline cursor-pointer"
+            >
+              Limpar
+            </button>
+          </div>
+          <div className="max-h-56 overflow-y-auto py-1">
+            {options.length === 0 && (
+              <p className="px-3 py-3 text-xs text-gray-400 font-medium">Nenhuma OS disponível</p>
+            )}
+            {options.map((os) => (
+              <label
+                key={os}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-green-50/50 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.includes(os)}
+                  onChange={() => toggleOs(os)}
+                  className="accent-[#0D6E3F] w-4 h-4 cursor-pointer"
+                />
+                {os}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function DiariasPage() {
@@ -184,6 +272,11 @@ export default function DiariasPage() {
   const [minhasDiarias, setMinhasDiarias] = useState<Diaria[]>([]);
   const [todasDiarias, setTodasDiarias] = useState<Diaria[]>([]);
 
+  // Id da diária sendo impressa no momento (mostra spinner no botão de
+  // impressão enquanto os dados dos demais integrantes da equipe são
+  // buscados, no caso de um lançamento em equipe).
+  const [printingDiariaId, setPrintingDiariaId] = useState<string | null>(null);
+
   // Bloqueio global do período de lançamento de diárias (controlado pelo admin)
   const [periodoBloqueado, setPeriodoBloqueado] = useState(false);
   const [isTogglingBloqueio, setIsTogglingBloqueio] = useState(false);
@@ -196,7 +289,7 @@ export default function DiariasPage() {
   // Filtro de data para a tabela/exportação do painel admin
   const [filtroDataInicio, setFiltroDataInicio] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
-  const [filtroOS, setFiltroOS] = useState("");
+  const [filtroOS, setFiltroOS] = useState<string[]>([]);
 
   // Formatos e relatórios selecionados para a exportação (admin)
   const [exportarExcel, setExportarExcel] = useState(true);
@@ -425,6 +518,51 @@ export default function DiariasPage() {
       fetchTodasDiarias();
     }
   }, [isAdmin]);
+
+  // Imprime uma diária: quando ela pertence a um lançamento em equipe
+  // (equipe_id preenchido), busca a diária de TODOS os integrantes daquela
+  // equipe — não apenas a do técnico que clicou em "Imprimir" — para que o
+  // relatório gerado reflita a equipe inteira, e não só um técnico. Qualquer
+  // integrante pode imprimir e verá os mesmos dados completos da equipe.
+  const handleImprimirDiaria = async (diaria: Diaria) => {
+    if (!diaria.equipe_id) {
+      exportDiariasToPdf([diaria]);
+      return;
+    }
+
+    setPrintingDiariaId(diaria.id);
+    try {
+      const { data, error } = await supabase
+        .from("diarias")
+        .select(`
+          *,
+          tecnicos:matricula_tecnico (
+            matricula,
+            nome,
+            regional
+          ),
+          diarias_escolas (
+            etapas,
+            escolas ( codigo_escola, codigo_municipio, sre, municipio, escola, localizacao, dependencia )
+          )
+        `)
+        .eq("equipe_id", diaria.equipe_id)
+        .order("created_at", { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        exportDiariasToPdf(normalizeDiarias(data as unknown as Diaria[]));
+      } else {
+        // Falha ao buscar a equipe (ou nada encontrado): ainda assim imprime
+        // ao menos a diária deste técnico, para não deixar o clique sem efeito.
+        exportDiariasToPdf([diaria]);
+      }
+    } catch (err) {
+      console.error(err);
+      exportDiariasToPdf([diaria]);
+    } finally {
+      setPrintingDiariaId(null);
+    }
+  };
 
   // Fetch the global "lançamento bloqueado" flag and the fixed valor_diaria
   // — needed for both technicians and admin. A OS não é mais lida daqui:
@@ -1190,14 +1328,51 @@ export default function DiariasPage() {
   const diariasFiltradas = todasDiarias.filter((diaria) => {
     if (filtroDataInicio && diaria.data_saida < filtroDataInicio) return false;
     if (filtroDataFim && diaria.data_saida > filtroDataFim) return false;
-    if (filtroOS && diaria.ordem_servico !== filtroOS) return false;
+    if (filtroOS.length > 0 && !filtroOS.includes(diaria.ordem_servico)) return false;
     return true;
   });
+
+  // Linhas marcadas na tabela do admin para compor o relatório exportado.
+  // Por padrão todas as linhas filtradas ficam selecionadas; ao mudar o
+  // filtro (período/OS) ou recarregar os dados, a seleção volta a acompanhar
+  // o novo conjunto filtrado.
+  const [selectedDiariaIds, setSelectedDiariaIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setSelectedDiariaIds(new Set(diariasFiltradas.map((d) => d.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todasDiarias, filtroDataInicio, filtroDataFim, filtroOS]);
+
+  const diariasSelecionadas = diariasFiltradas.filter((d) => selectedDiariaIds.has(d.id));
+  const todasFiltradasSelecionadas =
+    diariasFiltradas.length > 0 && diariasFiltradas.every((d) => selectedDiariaIds.has(d.id));
+
+  const handleToggleSelecaoDiaria = (id: string) => {
+    setSelectedDiariaIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelecionarTodas = () => {
+    setSelectedDiariaIds((prev) => {
+      if (todasFiltradasSelecionadas) {
+        // Desmarca só as que estão visíveis no filtro atual
+        const next = new Set(prev);
+        diariasFiltradas.forEach((d) => next.delete(d.id));
+        return next;
+      }
+      const next = new Set(prev);
+      diariasFiltradas.forEach((d) => next.add(d.id));
+      return next;
+    });
+  };
 
   const handleLimparFiltroData = () => {
     setFiltroDataInicio("");
     setFiltroDataFim("");
-    setFiltroOS("");
+    setFiltroOS([]);
   };
 
   // Municípios da rota atual (origem + destinos) — usado para avisar quando uma
@@ -2202,11 +2377,16 @@ export default function DiariasPage() {
                         </div>
                         <div className="flex gap-1">
                           <button
-                            onClick={() => exportDiariasToPdf([diaria])}
-                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors cursor-pointer"
-                            title="Imprimir esta diária"
+                            onClick={() => handleImprimirDiaria(diaria)}
+                            disabled={printingDiariaId === diaria.id}
+                            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                            title={diaria.equipe_id ? "Imprimir diária da equipe" : "Imprimir esta diária"}
                           >
-                            <Printer size={15} />
+                            {printingDiariaId === diaria.id ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <Printer size={15} />
+                            )}
                           </button>
                           <button
                             onClick={() => handleEditClick(diaria)}
@@ -2314,11 +2494,11 @@ export default function DiariasPage() {
                     <button
                       onClick={() => {
                         const opts = { incluirDiarias: incluirRelatorioDiarias, incluirEscolas: incluirRelatorioEscolas };
-                        if (exportarExcel) exportDiariasToExcel(diariasFiltradas, opts);
-                        if (exportarPdf) exportDiariasToPdf(diariasFiltradas, opts);
+                        if (exportarExcel) exportDiariasToExcel(diariasSelecionadas, opts);
+                        if (exportarPdf) exportDiariasToPdf(diariasSelecionadas, opts);
                       }}
                       disabled={
-                        diariasFiltradas.length === 0 ||
+                        diariasSelecionadas.length === 0 ||
                         (!exportarExcel && !exportarPdf) ||
                         (!incluirRelatorioDiarias && !incluirRelatorioEscolas)
                       }
@@ -2413,20 +2593,9 @@ export default function DiariasPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1">OS</label>
-                  <select
-                    value={filtroOS}
-                    onChange={(e) => setFiltroOS(e.target.value)}
-                    className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#0D6E3F] text-gray-800 text-sm bg-white"
-                  >
-                    <option value="">Todas</option>
-                    {osDisponiveis.map((os) => (
-                      <option key={os} value={os}>
-                        {os}
-                      </option>
-                    ))}
-                  </select>
+                  <OsMultiSelect options={osDisponiveis} selected={filtroOS} onChange={setFiltroOS} />
                 </div>
-                {(filtroDataInicio || filtroDataFim || filtroOS) && (
+                {(filtroDataInicio || filtroDataFim || filtroOS.length > 0) && (
                   <button
                     type="button"
                     onClick={handleLimparFiltroData}
@@ -2439,6 +2608,10 @@ export default function DiariasPage() {
                   <CalendarRange size={14} />
                   {diariasFiltradas.length} de {todasDiarias.length} diária(s)
                 </span>
+                <span className="text-xs text-gray-400 flex items-center gap-1">
+                  <CheckCircle2 size={14} />
+                  {diariasSelecionadas.length} selecionada(s) para o relatório
+                </span>
               </div>
             </div>
 
@@ -2447,6 +2620,15 @@ export default function DiariasPage() {
               <table className="w-full text-left border-collapse text-sm text-gray-600">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-150 font-bold text-gray-700">
+                    <th className="p-4 w-10">
+                      <input
+                        type="checkbox"
+                        checked={todasFiltradasSelecionadas}
+                        onChange={handleToggleSelecionarTodas}
+                        className="accent-[#0D6E3F] w-4 h-4 cursor-pointer"
+                        title="Selecionar/desmarcar todas as linhas filtradas"
+                      />
+                    </th>
                     <th className="p-4">Regional</th>
                     <th className="p-4">Nome</th>
                     <th className="p-4">Matrícula</th>
@@ -2463,7 +2645,7 @@ export default function DiariasPage() {
                 <tbody className="divide-y divide-gray-100">
                   {diariasFiltradas.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className="p-8 text-center text-gray-400">
+                      <td colSpan={12} className="p-8 text-center text-gray-400">
                         {todasDiarias.length === 0
                           ? "Nenhum registro de diária encontrado no banco de dados."
                           : "Nenhuma diária encontrada para o período filtrado."}
@@ -2472,6 +2654,14 @@ export default function DiariasPage() {
                   ) : (
                     diariasFiltradas.map((diaria) => (
                       <tr key={diaria.id} className="hover:bg-green-50/30 transition-colors">
+                        <td className="p-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedDiariaIds.has(diaria.id)}
+                            onChange={() => handleToggleSelecaoDiaria(diaria.id)}
+                            className="accent-[#0D6E3F] w-4 h-4 cursor-pointer"
+                          />
+                        </td>
                         <td className="p-4 font-semibold">{diaria.tecnicos?.regional}</td>
                         <td className="p-4 font-medium text-gray-800">{diaria.tecnicos?.nome}</td>
                         <td className="p-4">{diaria.matricula_tecnico}</td>
